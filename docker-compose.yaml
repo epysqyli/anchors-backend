@@ -12,23 +12,9 @@ services:
     ports:
       - "$PORT:$PORT"
     depends_on:
-      - mongodb
       - postgres
     dns:
       - 8.8.8.8
-
-  mongodb:
-    image: mongo:6.0
-    container_name: mongodb
-    restart: unless-stopped
-    env_file: .env
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=$DB_USER
-      - MONGO_INITDB_ROOT_PASSWORD=$DB_PASS
-    ports:
-      - "$DB_PORT:$DB_PORT"
-    volumes:
-      - mongodbdata:/data/db
 
   postgres: 
     image: postgres:14
@@ -47,5 +33,4 @@ services:
 
 
 volumes:
-  mongodbdata:
   postgres-data:
