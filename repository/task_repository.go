@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/amitshekhariitbhu/go-backend-clean-architecture/domain"
+	"github.com/epysqyli/anchors-backend/domain"
 	"gorm.io/gorm"
 )
 

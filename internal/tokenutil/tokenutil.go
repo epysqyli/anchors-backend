@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/amitshekhariitbhu/go-backend-clean-architecture/domain"
+	"github.com/epysqyli/anchors-backend/domain"
 	jwt "github.com/golang-jwt/jwt/v4"
 )
 

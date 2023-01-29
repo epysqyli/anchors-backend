@@ -3,9 +3,9 @@ package main
 import (
 	"time"
 
-	"github.com/amitshekhariitbhu/go-backend-clean-architecture/api/middleware"
-	routeV1 "github.com/amitshekhariitbhu/go-backend-clean-architecture/api/route/v1"
-	"github.com/amitshekhariitbhu/go-backend-clean-architecture/bootstrap"
+	"github.com/epysqyli/anchors-backend/api/middleware"
+	routeV1 "github.com/epysqyli/anchors-backend/api/route/v1"
+	"github.com/epysqyli/anchors-backend/bootstrap"
 	"github.com/gin-gonic/gin"
 )
 

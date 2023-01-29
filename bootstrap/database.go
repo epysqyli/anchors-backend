@@ -3,7 +3,7 @@ package bootstrap
 import (
 	"fmt"
 
-	"github.com/amitshekhariitbhu/go-backend-clean-architecture/domain"
+	"github.com/epysqyli/anchors-backend/domain"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

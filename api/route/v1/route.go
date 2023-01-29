@@ -3,8 +3,8 @@ package route
 import (
 	"time"
 
-	"github.com/amitshekhariitbhu/go-backend-clean-architecture/api/middleware"
-	"github.com/amitshekhariitbhu/go-backend-clean-architecture/bootstrap"
+	"github.com/epysqyli/anchors-backend/api/middleware"
+	"github.com/epysqyli/anchors-backend/bootstrap"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )

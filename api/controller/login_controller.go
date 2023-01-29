@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/amitshekhariitbhu/go-backend-clean-architecture/bootstrap"
-	"github.com/amitshekhariitbhu/go-backend-clean-architecture/domain"
+	"github.com/epysqyli/anchors-backend/bootstrap"
+	"github.com/epysqyli/anchors-backend/domain"
 	"github.com/gin-gonic/gin"
 )
 
