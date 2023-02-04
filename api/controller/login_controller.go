@@ -1,13 +1,12 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/epysqyli/anchors-backend/bootstrap"
 	"github.com/epysqyli/anchors-backend/domain"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type LoginController struct {
@@ -15,18 +14,8 @@ type LoginController struct {
 	Env          *bootstrap.Env
 }
 
-/*
-login and signup flow will be changed
-there is no need for email password pair
-everything happens based on the google jwt
-google JWT validation:
-  - if ok -> generate access/refresh token pair
-  - if first access -> signup flow
-  - if returning access -> normal login flow
-  - if not ok -> error message
-*/
 func (lc *LoginController) Login(c *gin.Context) {
-	var request domain.GoogleLoginRequest
+	var request domain.LoginRequest
 
 	err := c.ShouldBind(&request)
 	if err != nil {
@@ -34,27 +23,14 @@ func (lc *LoginController) Login(c *gin.Context) {
 		return
 	}
 
-	// -> apply for non google flow - should it be kept?
-	// user, err := lc.LoginUsecase.GetUserByEmail(c, request.Email)
-	// if err != nil {
-	// 	c.JSON(http.StatusNotFound, domain.ErrorResponse{Message: "User not found with the given email"})
-	// 	return
-	// }
-
-	// if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)) != nil {
-	// 	c.JSON(http.StatusUnauthorized, domain.ErrorResponse{Message: "Invalid credentials"})
-	// 	return
-	// }
-
-	claims, err := lc.LoginUsecase.ExtractGoogleClaims(request.Credential)
+	user, err := lc.LoginUsecase.GetUserByEmail(c, request.Email)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: err.Error()})
+		c.JSON(http.StatusNotFound, domain.ErrorResponse{Message: "User not found with the given email"})
 		return
 	}
 
-	user, err := lc.LoginUsecase.GetUserByEmail(c, claims.Email)
-	if err != nil {
-		c.JSON(http.StatusNotFound, domain.ErrorResponse{Message: "User not found with the given email"})
+	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)) != nil {
+		c.JSON(http.StatusUnauthorized, domain.ErrorResponse{Message: "Invalid credentials"})
 		return
 	}
 
@@ -70,12 +46,9 @@ func (lc *LoginController) Login(c *gin.Context) {
 		return
 	}
 
-	cookieValue := fmt.Sprintf("%s---%s", accessToken, refreshToken)
-	exp := time.Now().Add(time.Hour * time.Duration(lc.Env.RefreshTokenExpiryHour)).Unix()
-	c.SetCookie(domain.AuthToken, cookieValue, int(exp), "/", "localhost", true, true)
-
-	successResponse := domain.SuccessResponse{
-		Message: "http only cookie set",
+	successResponse := domain.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	}
 
 	c.JSON(http.StatusOK, successResponse)

@@ -11,36 +11,32 @@ import (
 
 func JwtAuthMiddleware(secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// keep a way for testing purpose to use curl + Auth header?
-		// authHeader := c.Request.Header.Get("Authorization")
-		// t := strings.Split(authHeader, " ")
+		authHeader := c.Request.Header.Get("Authorization")
+		t := strings.Split(authHeader, " ")
 
-		tokenCookie, err := c.Cookie(domain.AuthToken)
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, domain.ErrorResponse{Message: err.Error()})
-			c.Abort()
-			return
-		}
+		if len(t) == 2 {
+			authToken := t[1]
+			authorized, err := tokenutil.IsAuthorized(authToken, secret)
 
-		accessToken := strings.Split(tokenCookie, "---")[0]
-		authorized, err := tokenutil.IsAuthorized(accessToken, secret)
-
-		if authorized {
-			userID, err := tokenutil.ExtractIDFromToken(accessToken, secret)
-
-			if err != nil {
-				c.JSON(http.StatusUnauthorized, domain.ErrorResponse{Message: err.Error()})
-				c.Abort()
+			if authorized {
+				userID, err := tokenutil.ExtractIDFromToken(authToken, secret)
+				if err != nil {
+					c.JSON(http.StatusUnauthorized, domain.ErrorResponse{Message: err.Error()})
+					c.Abort()
+					return
+				}
+				c.Set("x-user-id", userID)
+				c.Next()
 				return
 			}
 
-			c.Set("x-user-id", userID)
-			c.Next()
+			c.JSON(http.StatusUnauthorized, domain.ErrorResponse{Message: err.Error()})
+			c.Abort()
+
 			return
 		}
 
-		c.JSON(http.StatusUnauthorized, domain.ErrorResponse{Message: err.Error()})
+		c.JSON(http.StatusUnauthorized, domain.ErrorResponse{Message: "Not authorized"})
 		c.Abort()
-		return
 	}
 }

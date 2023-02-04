@@ -20,10 +20,6 @@ func NewLoginUsecase(userRepository domain.UserRepository, timeout time.Duration
 	}
 }
 
-func (lu *loginUsecase) ExtractGoogleClaims(credential string) (domain.GoogleClaims, error) {
-	return tokenutil.ValidateGoogleJwt(credential)
-}
-
 func (lu *loginUsecase) GetUserByEmail(c context.Context, email string) (domain.User, error) {
 	ctx, cancel := context.WithTimeout(c, lu.contextTimeout)
 	defer cancel()
