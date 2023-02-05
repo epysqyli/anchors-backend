@@ -2,14 +2,25 @@ package bootstrap
 
 import (
 	"fmt"
+	"log"
 
-	"github.com/epysqyli/anchors-backend/domain"
+	"github.com/epysqyli/anchors-backend/migration"
+	"github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 func NewPostgresDatabase(env *Env) *gorm.DB {
-	connString := fmt.Sprintf("host=postgres user=%s password=%s dbname=%s port=5432 sslmode=disable TimeZone=Europe/Rome", env.PostgresUser, env.PostgresPassword, env.PostgresDB)
+	connString := fmt.Sprintf("host=postgres"+
+		" user=%s"+
+		" password=%s"+
+		" dbname=%s"+
+		" port=5432"+
+		" sslmode=disable"+
+		" TimeZone=Europe/Rome",
+		env.PostgresUser,
+		env.PostgresPassword,
+		env.PostgresDB)
 
 	config := postgres.Config{
 		DSN:                  connString,
@@ -22,7 +33,14 @@ func NewPostgresDatabase(env *Env) *gorm.DB {
 		panic("database connection failed")
 	}
 
-	db.AutoMigrate(&domain.User{}, &domain.Task{})
+	migrations := gormigrate.New(db, gormigrate.DefaultOptions, []*gormigrate.Migration{
+		migration.Users(),
+		migration.Tasks(),
+	})
+
+	if err = migrations.Migrate(); err != nil {
+		log.Fatalf("Migration failed: %v", err)
+	}
 
 	return db
 }
