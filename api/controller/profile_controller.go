@@ -8,16 +8,21 @@ import (
 )
 
 type ProfileController struct {
-	ProfileUsecase domain.ProfileUsecase
+	UserRepository domain.UserRepository
 }
 
 func (pc *ProfileController) Fetch(c *gin.Context) {
 	userID := c.GetString("x-user-id")
 
-	profile, err := pc.ProfileUsecase.GetProfileByID(c, userID)
+	user, err := pc.UserRepository.GetByID(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: err.Error()})
 		return
+	}
+
+	profile := domain.Profile{
+		Name:  user.Name,
+		Email: user.Email,
 	}
 
 	c.JSON(http.StatusOK, profile)

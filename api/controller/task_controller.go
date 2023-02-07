@@ -9,7 +9,7 @@ import (
 )
 
 type TaskController struct {
-	TaskUsecase domain.TaskUsecase
+	TaskRepository domain.TaskRepository
 }
 
 func (tc *TaskController) Create(c *gin.Context) {
@@ -24,7 +24,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 	userId, _ := strconv.ParseInt(c.GetString("x-user-id"), 0, 32)
 	task.UserId = uint(userId)
 
-	err = tc.TaskUsecase.Create(c, &task)
+	err = tc.TaskRepository.Create(&task)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: err.Error()})
 		return
@@ -38,7 +38,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 func (u *TaskController) Fetch(c *gin.Context) {
 	userID := c.GetString("x-user-id")
 
-	tasks, err := u.TaskUsecase.FetchByUserID(c, userID)
+	tasks, err := u.TaskRepository.FetchByUserID(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: err.Error()})
 		return

@@ -1,34 +1,26 @@
 package repository
 
 import (
-	"context"
-
 	"github.com/epysqyli/anchors-backend/domain"
 	"gorm.io/gorm"
 )
 
-type taskRepository struct {
+type TaskRepository struct {
 	database *gorm.DB
 }
 
 func NewTaskRepository(db *gorm.DB) domain.TaskRepository {
-	return &taskRepository{
+	return &TaskRepository{
 		database: db,
 	}
 }
 
-func (tr *taskRepository) Create(c context.Context, task *domain.Task) error {
-	// insert task into DB
-	// -> deal with context as well (timeout?)
-
+func (tr *TaskRepository) Create(task *domain.Task) error {
 	res := tr.database.Create(task)
 	return res.Error
 }
 
-func (tr *taskRepository) FetchByUserID(c context.Context, userID string) ([]domain.Task, error) {
-	// fetch all user's tasks
-	// -> deal with context as well (timeout?)
-
+func (tr *TaskRepository) FetchByUserID(userID string) ([]domain.Task, error) {
 	var tasks []domain.Task
 	res := tr.database.Model(&domain.Task{}).Find(&tasks, "user_id = ?", userID)
 	return tasks, res.Error

@@ -5,12 +5,13 @@ import (
 
 	"github.com/epysqyli/anchors-backend/bootstrap"
 	"github.com/epysqyli/anchors-backend/domain"
+	"github.com/epysqyli/anchors-backend/internal/tokenutil"
 	"github.com/gin-gonic/gin"
 )
 
 type RefreshTokenController struct {
-	RefreshTokenUsecase domain.RefreshTokenUsecase
-	Env                 *bootstrap.Env
+	UserRepository domain.UserRepository
+	Env            *bootstrap.Env
 }
 
 func (rtc *RefreshTokenController) RefreshToken(c *gin.Context) {
@@ -22,25 +23,25 @@ func (rtc *RefreshTokenController) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	id, err := rtc.RefreshTokenUsecase.ExtractIDFromToken(request.RefreshToken, rtc.Env.RefreshTokenSecret)
+	id, err := tokenutil.ExtractIDFromToken(request.RefreshToken, rtc.Env.RefreshTokenSecret)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, domain.ErrorResponse{Message: "User not found"})
 		return
 	}
 
-	user, err := rtc.RefreshTokenUsecase.GetUserByID(c, id)
+	user, err := rtc.UserRepository.GetByID(id)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, domain.ErrorResponse{Message: "User not found"})
 		return
 	}
 
-	accessToken, err := rtc.RefreshTokenUsecase.CreateAccessToken(&user, rtc.Env.AccessTokenSecret, rtc.Env.AccessTokenExpiryHour)
+	accessToken, err := tokenutil.CreateAccessToken(&user, rtc.Env.AccessTokenSecret, rtc.Env.AccessTokenExpiryHour)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: err.Error()})
 		return
 	}
 
-	refreshToken, err := rtc.RefreshTokenUsecase.CreateRefreshToken(&user, rtc.Env.RefreshTokenSecret, rtc.Env.RefreshTokenExpiryHour)
+	refreshToken, err := tokenutil.CreateRefreshToken(&user, rtc.Env.RefreshTokenSecret, rtc.Env.RefreshTokenExpiryHour)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, domain.ErrorResponse{Message: err.Error()})
 		return

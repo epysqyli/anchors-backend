@@ -1,10 +1,6 @@
 package domain
 
-import (
-	"context"
-
-	"gorm.io/gorm"
-)
+import "gorm.io/gorm"
 
 type User struct {
 	gorm.Model
@@ -15,8 +11,8 @@ type User struct {
 }
 
 type UserRepository interface {
-	GetByID(c context.Context, id string) (User, error)
-	GetByEmail(c context.Context, email string) (User, error)
-	Create(c context.Context, user *User) error
-	Fetch(c context.Context) ([]User, error)
+	GetByID(id string) (User, error)
+	GetByEmail(email string) (User, error)
+	Create(user *User) error
+	Fetch() ([]User, error)
 }
