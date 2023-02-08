@@ -1,8 +1,6 @@
 package route
 
 import (
-	"time"
-
 	"github.com/epysqyli/anchors-backend/api/controller"
 	"github.com/epysqyli/anchors-backend/bootstrap"
 	"github.com/epysqyli/anchors-backend/repository"
@@ -10,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewSignupRouter(env *bootstrap.Env, timeout time.Duration, psqlDB *gorm.DB, group *gin.RouterGroup) {
+func NewSignupRouter(env *bootstrap.Env, psqlDB *gorm.DB, group *gin.RouterGroup) {
 	sc := controller.SignupController{
 		UserRepository: repository.NewUserRepository(psqlDB),
 		Env:            env,
