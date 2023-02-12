@@ -20,18 +20,18 @@ func NewPostgresDatabase(env *Env) *gorm.DB {
 	case "development":
 		dbName = env.PostgresDevelopmentDB
 		host = "postgres"
-		user = env.PostgresUser
-		password = ""
+		user = env.PostgresDevelopmentUser
+		password = env.PostgresDevelopmentPassword
 	case "test":
 		dbName = env.PostgresTestDB
 		host = "localhost"
 		user = env.PostgresTestUser
 		password = env.PostgresTestPassword
 	case "production":
-		dbName = ""
+		dbName = env.PostgresProductionDB
 		host = ""
-		user = ""
-		password = env.PostgresPassword
+		user = env.PostgresProductionUser
+		password = env.PostgresProductionPassword
 	}
 
 	connString := fmt.Sprintf("host=%s"+
