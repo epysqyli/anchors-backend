@@ -22,9 +22,9 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      - POSTGRES_USER=$POSTGRES_USER
-      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
-      - POSTGRES_DB=$POSTGRES_DB
+      - POSTGRES_USER=$POSTGRES_DEVELOPMENT_USER
+      - POSTGRES_PASSWORD=$POSTGRES_DEVELOPMENT_PASSWORD
+      - POSTGRES_DB=$POSTGRES_DEVELOPMENT_DB
       - PGDATA=$PGDATA
     ports:
       - 5432:5432
