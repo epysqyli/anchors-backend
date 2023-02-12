@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	app := bootstrap.App()
+	app := bootstrap.App(".env")
 	env := app.Env
 	psqlDB := app.Postgres
 	gin := gin.Default()

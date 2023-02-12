@@ -13,6 +13,6 @@ func NewTaskRouter(env *bootstrap.Env, psqlDB *gorm.DB, group *gin.RouterGroup) 
 		TaskRepository: repository.NewTaskRepository(psqlDB),
 	}
 
-	group.GET("/tasks", tc.Fetch)
-	group.POST("/tasks", tc.Create)
+	group.GET("/tasks", tc.FetchTask)
+	group.POST("/tasks", tc.CreateTask)
 }

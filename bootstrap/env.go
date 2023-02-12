@@ -16,14 +16,17 @@ type Env struct {
 	RefreshTokenSecret     string `mapstructure:"REFRESH_TOKEN_SECRET"`
 	PostgresUser           string `mapstructure:"POSTGRES_USER"`
 	PostgresPassword       string `mapstructure:"POSTGRES_PASSWORD"`
-	PostgresDB             string `mapstructure:"POSTGRES_DB"`
+	PostgresTestPassword   string `mapstructure:"POSTGRES_TEST_PASSWORD"`
+	PostgresDevelopmentDB  string `mapstructure:"POSTGRES_DEVELOPMENT_DB"`
+	PostgresTestDB         string `mapstructure:"POSTGRES_TEST_DB"`
+	PostgresProductionDB   string `mapstructure:"POSTGRES_PRODUCTION_DB"`
 	PostgresData           string `mapstructure:"PG_DATA"`
 	PostgresHost           string `mapstructure:"PG_HOST"`
 }
 
-func NewEnv() *Env {
+func NewEnv(envPath string) *Env {
 	env := Env{}
-	viper.SetConfigFile(".env")
+	viper.SetConfigFile(envPath)
 
 	err := viper.ReadInConfig()
 	if err != nil {

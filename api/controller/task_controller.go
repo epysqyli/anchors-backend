@@ -12,7 +12,7 @@ type TaskController struct {
 	TaskRepository domain.TaskRepository
 }
 
-func (tc *TaskController) Create(c *gin.Context) {
+func (tc *TaskController) CreateTask(c *gin.Context) {
 	var task domain.Task
 
 	err := c.ShouldBind(&task)
@@ -35,7 +35,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 	})
 }
 
-func (u *TaskController) Fetch(c *gin.Context) {
+func (u *TaskController) FetchTask(c *gin.Context) {
 	userID := c.GetString("x-user-id")
 
 	tasks, err := u.TaskRepository.FetchByUserID(userID)
