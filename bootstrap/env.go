@@ -41,9 +41,5 @@ func NewEnv(envPath string) *Env {
 		log.Fatal("Environment can't be loaded: ", err)
 	}
 
-	if env.AppEnv == "development" {
-		log.Println("The App is running in development env")
-	}
-
 	return &env
 }
