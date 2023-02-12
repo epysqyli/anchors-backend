@@ -15,6 +15,7 @@ type Env struct {
 	AccessTokenSecret      string `mapstructure:"ACCESS_TOKEN_SECRET"`
 	RefreshTokenSecret     string `mapstructure:"REFRESH_TOKEN_SECRET"`
 	PostgresUser           string `mapstructure:"POSTGRES_USER"`
+	PostgresTestUser       string `mapstructure:"POSTGRES_TEST_USER"`
 	PostgresPassword       string `mapstructure:"POSTGRES_PASSWORD"`
 	PostgresTestPassword   string `mapstructure:"POSTGRES_TEST_PASSWORD"`
 	PostgresDevelopmentDB  string `mapstructure:"POSTGRES_DEVELOPMENT_DB"`

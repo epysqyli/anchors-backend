@@ -25,7 +25,7 @@ func NewPostgresDatabase(env *Env) *gorm.DB {
 	case "test":
 		dbName = env.PostgresTestDB
 		host = "localhost"
-		user = "anchors"
+		user = env.PostgresTestUser
 		password = env.PostgresTestPassword
 	case "production":
 		dbName = ""
