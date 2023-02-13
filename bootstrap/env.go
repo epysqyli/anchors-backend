@@ -25,6 +25,8 @@ type Env struct {
 	PostgresProductionDB        string `mapstructure:"POSTGRES_PRODUCTION_DB"`
 	PostgresData                string `mapstructure:"PG_DATA"`
 	PostgresHost                string `mapstructure:"PG_HOST"`
+	DBPortHostDevelopment       string `mapstructure:"DB_PORT_HOST_DEVELOPMENT"`
+	DBPortHostTest              string `mapstructure:"DB_PORT_HOST_TEST"`
 }
 
 func NewEnv(envPath string) *Env {

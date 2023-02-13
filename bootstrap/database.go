@@ -15,6 +15,7 @@ func NewPostgresDatabase(env *Env) *gorm.DB {
 	host := ""
 	user := ""
 	password := ""
+	port := ""
 
 	switch env.AppEnv {
 	case "development":
@@ -22,26 +23,29 @@ func NewPostgresDatabase(env *Env) *gorm.DB {
 		host = "postgres"
 		user = env.PostgresDevelopmentUser
 		password = env.PostgresDevelopmentPassword
+		port = env.DBPortHostDevelopment
 	case "test":
 		dbName = env.PostgresTestDB
 		host = "localhost"
 		user = env.PostgresTestUser
 		password = env.PostgresTestPassword
+		port = env.DBPortHostTest
 	case "production":
 		dbName = env.PostgresProductionDB
 		host = ""
 		user = env.PostgresProductionUser
 		password = env.PostgresProductionPassword
+		port = ""
 	}
 
 	connString := fmt.Sprintf("host=%s"+
 		" user=%s"+
 		" password=%s"+
 		" dbname=%s"+
-		" port=5432"+
+		" port=%s"+
 		" sslmode=disable"+
 		" TimeZone=Europe/Rome",
-		host, user, password, dbName)
+		host, user, password, dbName, port)
 
 	config := postgres.Config{
 		DSN:                  connString,

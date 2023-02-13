@@ -27,7 +27,7 @@ services:
       - POSTGRES_DB=$POSTGRES_DEVELOPMENT_DB
       - PGDATA=$PGDATA
     ports:
-      - 5432:5432
+      - "$DB_PORT_HOST_DEVELOPMENT:$DB_PORT_CONTAINER"
     volumes:
       - postgres-data:$PGDATA
 
