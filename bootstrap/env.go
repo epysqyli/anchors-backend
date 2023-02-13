@@ -7,7 +7,7 @@ import (
 )
 
 type Env struct {
-	AppEnv                      string `mapstructure:"APP_ENV"`
+	AppEnv                      string
 	ServerAddress               string `mapstructure:"SERVER_ADDRESS"`
 	ContextTimeout              int    `mapstructure:"CONTEXT_TIMEOUT"`
 	AccessTokenExpiryHour       int    `mapstructure:"ACCESS_TOKEN_EXPIRY_HOUR"`
@@ -29,9 +29,10 @@ type Env struct {
 	DBPortHostTest              string `mapstructure:"DB_PORT_HOST_TEST"`
 }
 
-func NewEnv(envPath string) *Env {
+func NewEnv(envPath string, envMode string) *Env {
 	env := Env{}
 	viper.SetConfigFile(envPath)
+	env.AppEnv = envMode
 
 	err := viper.ReadInConfig()
 	if err != nil {

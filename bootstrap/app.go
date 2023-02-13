@@ -9,9 +9,9 @@ type Application struct {
 	Postgres *gorm.DB
 }
 
-func App(envPath string) Application {
+func App(envPath string, envMode string) Application {
 	app := &Application{}
-	app.Env = NewEnv(envPath)
+	app.Env = NewEnv(envPath, envMode)
 	app.Postgres = NewPostgresDatabase(app.Env)
 	return *app
 }

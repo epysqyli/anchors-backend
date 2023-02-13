@@ -11,7 +11,7 @@ import (
 // does it make sense to have controller_test as a package?
 // can it be done in TestMain for the controller package?
 func setup() (*gin.Engine, *gorm.DB) {
-	app := bootstrap.App("../../../.env")
+	app := bootstrap.App("../../../.env", "test")
 	psqlDB := app.Postgres
 
 	gin.SetMode(gin.TestMode)
