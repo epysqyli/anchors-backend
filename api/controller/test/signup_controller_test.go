@@ -11,14 +11,13 @@ func TestSignup(t *testing.T) {
 	gin, db := setup()
 
 	t.Run("success", func(t *testing.T) {
-		body := []byte(`{
+		signupReqBody := []byte(`{
 			"name": "anchors",
 			"email": "anchors@gmail.com",
 			"password": "anchors"
 		}`)
 
-		bodyReader := bytes.NewReader(body)
-		req, err := http.NewRequest(http.MethodPost, "/v1/signup", bodyReader)
+		req, err := http.NewRequest(http.MethodPost, "/v1/signup", bytes.NewReader(signupReqBody))
 
 		if err != nil {
 			t.Fatalf("could not create request: %v\n", err)
