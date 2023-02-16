@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,13 +10,13 @@ import (
 
 func TestLogin(t *testing.T) {
 	gin, db := setup()
+	user := sampleUser()
 
 	t.Run("success", func(t *testing.T) {
-		signupReqBody := []byte(`{
-			"name": "testUser",
-			"email": "testUser@gmail.com",
-			"password": "testPassword"
-		}`)
+		signupReqBody := []byte(fmt.Sprintf(
+			`{"name": "%s", "email": "%s", "password": "%s"}`,
+			user.Name, user.Email, user.Password),
+		)
 
 		signupReq, err := http.NewRequest(http.MethodPost, "/v1/signup", bytes.NewReader(signupReqBody))
 
@@ -31,10 +32,7 @@ func TestLogin(t *testing.T) {
 			t.Fatalf("Response returned with an unexpected status: %v\n", signupRec.Code)
 		}
 
-		loginReqBody := []byte(`{
-			"email": "testUser@gmail.com",
-			"password": "testPassword"
-		}`)
+		loginReqBody := []byte(fmt.Sprintf(`{"email": "%s", "password": "%s"}`, user.Email, user.Password))
 
 		loginReq, err := http.NewRequest(http.MethodPost, "/v1/login", bytes.NewReader(loginReqBody))
 		if err != nil {
@@ -50,5 +48,5 @@ func TestLogin(t *testing.T) {
 		}
 	})
 
-	cleanupUser(db, "testUser")
+	cleanupUser(db, user.Name)
 }

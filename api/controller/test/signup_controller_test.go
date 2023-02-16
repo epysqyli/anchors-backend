@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,13 +10,13 @@ import (
 
 func TestSignup(t *testing.T) {
 	gin, db := setup()
+	user := sampleUser()
 
 	t.Run("success", func(t *testing.T) {
-		signupReqBody := []byte(`{
-			"name": "testUser",
-			"email": "testUser@gmail.com",
-			"password": "testPassword"
-		}`)
+		signupReqBody := []byte(fmt.Sprintf(
+			`{"name": "%s", "email": "%s", "password": "%s"}`,
+			user.Name, user.Email, user.Password),
+		)
 
 		req, err := http.NewRequest(http.MethodPost, "/v1/signup", bytes.NewReader(signupReqBody))
 
@@ -33,5 +34,5 @@ func TestSignup(t *testing.T) {
 
 	})
 
-	cleanupUser(db, "testUser")
+	cleanupUser(db, user.Name)
 }
