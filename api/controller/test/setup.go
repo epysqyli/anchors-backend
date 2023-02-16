@@ -22,6 +22,11 @@ func setup() (*gin.Engine, *gorm.DB) {
 	return gin, psqlDB
 }
 
+// helper functions to manage users throughout tests
+func signup() {}
+
+func login() {}
+
 func cleanupUser(db *gorm.DB, userName string) {
 	var user domain.User
 	db.Model(&domain.User{}).Where("name = ?", userName).First(&user)

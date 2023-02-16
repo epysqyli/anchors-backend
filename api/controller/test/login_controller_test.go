@@ -12,9 +12,9 @@ func TestLogin(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		signupReqBody := []byte(`{
-			"name": "anchors",
-			"email": "anchors@gmail.com",
-			"password": "anchors"
+			"name": "testUser",
+			"email": "testUser@gmail.com",
+			"password": "testPassword"
 		}`)
 
 		signupReq, err := http.NewRequest(http.MethodPost, "/v1/signup", bytes.NewReader(signupReqBody))
@@ -32,8 +32,8 @@ func TestLogin(t *testing.T) {
 		}
 
 		loginReqBody := []byte(`{
-			"email": "anchors@gmail.com",
-			"password": "anchors"
+			"email": "testUser@gmail.com",
+			"password": "testPassword"
 		}`)
 
 		loginReq, err := http.NewRequest(http.MethodPost, "/v1/login", bytes.NewReader(loginReqBody))
@@ -50,5 +50,5 @@ func TestLogin(t *testing.T) {
 		}
 	})
 
-	cleanupUser(db, "anchors")
+	cleanupUser(db, "testUser")
 }
