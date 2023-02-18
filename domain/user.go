@@ -7,7 +7,6 @@ type User struct {
 	Name     string `json:"name" gorm:"unique"`
 	Email    string `json:"email" gorm:"unique"`
 	Password string `json:"password"`
-	Task     []Task
 }
 
 type UserRepository interface {
