@@ -17,7 +17,7 @@ func TestFetchIdeas(t *testing.T) {
 	user := sampleUser()
 	signup(gin, user)
 	user, _ = fetchUser(db, user.Name)
-	seedIdeas(db, user)
+	ideas, _ := seedIdeas(db, user)
 
 	t.Run("all", func(t *testing.T) {
 		ideaReq, err := http.NewRequest(http.MethodGet, "/v1/ideas", bytes.NewReader([]byte{}))
@@ -67,7 +67,27 @@ func TestFetchIdeas(t *testing.T) {
 	})
 
 	t.Run("byID", func(t *testing.T) {
-		t.Skip()
+		endpoint := fmt.Sprintf("/v1/ideas/%d", ideas[0].ID)
+		ideaReq, err := http.NewRequest(http.MethodGet, endpoint, bytes.NewReader([]byte{}))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		ideaReq.Header.Add("Content-Type", "application/json")
+		ideaRec := httptest.NewRecorder()
+
+		gin.ServeHTTP(ideaRec, ideaReq)
+
+		if ideaRec.Code != http.StatusOK {
+			t.Fatalf("Unexpected response status code: %d\n", ideaRec.Code)
+		}
+
+		ideaResp := domain.Idea{}
+		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
+
+		if ideaResp.Content != ideas[0].Content {
+			t.Fatalf("Unexpected response content:\n expected: %s\n obtained: %s\n", ideas[0].Content, ideaResp.Content)
+		}
 	})
 
 	cleanupIdeas(db)
@@ -125,7 +145,7 @@ func TestDeleteIdeaByID(t *testing.T) {
 	t.Skip()
 }
 
-func seedIdeas(db *gorm.DB, user domain.User) error {
+func seedIdeas(db *gorm.DB, user domain.User) ([]domain.Idea, error) {
 	firstIdea := domain.Idea{
 		UserId:  user.ID,
 		Content: "Some content that is suitable to a sample idea",
@@ -138,10 +158,16 @@ func seedIdeas(db *gorm.DB, user domain.User) error {
 
 	tx := db.CreateInBatches([]domain.Idea{firstIdea, secondIdea}, 2)
 	if tx.Error != nil {
-		return tx.Error
+		return nil, tx.Error
 	}
 
-	return nil
+	var ideas []domain.Idea
+	res := db.Find(&ideas)
+	if tx.Error != nil {
+		return nil, res.Error
+	}
+
+	return ideas, nil
 }
 
 func cleanupIdeas(db *gorm.DB) {

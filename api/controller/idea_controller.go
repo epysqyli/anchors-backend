@@ -12,7 +12,17 @@ type IdeaController struct {
 	IdeaRepository domain.IdeaRepository
 }
 
-func (ic *IdeaController) FetchIdeaByID(ctx *gin.Context) {}
+func (ic *IdeaController) FetchIdeaByID(ctx *gin.Context) {
+	id := ctx.Param("id")
+	idea, err := ic.IdeaRepository.FetchByID(ctx, id)
+
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, domain.ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, idea)
+}
 
 func (ic *IdeaController) FetchIdeasByUserID(ctx *gin.Context) {
 	userID := ctx.Param("user_id")
@@ -58,4 +68,6 @@ func (ic *IdeaController) CreateIdea(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, idea)
 }
 
-func (ic *IdeaController) DeleteIdeaByID(ctx *gin.Context) {}
+func (ic *IdeaController) DeleteIdeaByID(ctx *gin.Context) {
+	ctx.JSON(http.StatusNotFound, gin.H{})
+}

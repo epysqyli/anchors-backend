@@ -33,3 +33,9 @@ func (ir *IdeaRepository) FetchByUserID(c context.Context, userId string) ([]dom
 	res := ir.database.Model(&domain.Idea{}).Find(&ideas, "user_id = ?", userId)
 	return ideas, res.Error
 }
+
+func (ir *IdeaRepository) FetchByID(c context.Context, id string) (domain.Idea, error) {
+	var idea domain.Idea
+	res := ir.database.First(&idea, id)
+	return idea, res.Error
+}
