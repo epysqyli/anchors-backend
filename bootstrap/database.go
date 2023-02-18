@@ -39,14 +39,9 @@ func NewPostgresDatabase(env *Env) *gorm.DB {
 	}
 
 	connString := fmt.Sprintf(
-		"host=%s"+
-			" user=%s"+
-			" password=%s"+
-			" dbname=%s"+
-			" port=%s"+
-			" sslmode=disable"+
-			" TimeZone=Europe/Rome",
-		host, user, password, dbName, port)
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Europe/Rome",
+		host, user, password, dbName, port,
+	)
 
 	config := postgres.Config{
 		DSN:                  connString,
