@@ -16,7 +16,16 @@ func (ic *IdeaController) FetchIdeaByID(ctx *gin.Context) {}
 
 func (ic *IdeaController) FetchIdeasByUserID(ctx *gin.Context) {}
 
-func (ic *IdeaController) FetchAllIdeas(ctx *gin.Context) {}
+func (ic *IdeaController) FetchAllIdeas(ctx *gin.Context) {
+	ideas, err := ic.IdeaRepository.FetchAll(ctx)
+
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, domain.ErrorResponse{})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, ideas)
+}
 
 func (ic *IdeaController) CreateIdea(ctx *gin.Context) {
 	var idea domain.Idea

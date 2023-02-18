@@ -13,10 +13,27 @@ import (
 )
 
 func TestFetchIdeas(t *testing.T) {
-	// gin, db := setup()
-	// 1st: create new ideas associated to the user
-	// 2nd: create ideas with resources associated to them and test for the expected structure
-	// add a Book and a youtube video as resources in the second test
+	gin, db := setup()
+	user := sampleUser()
+	signup(gin, user)
+	user, _ = fetchUser(db, user.Name)
+	seedIdeas(db, user)
+
+	t.Run("all", func(t *testing.T) {
+		ideaReq, err := http.NewRequest(http.MethodGet, "/v1/ideas", bytes.NewReader([]byte{}))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		ideaReq.Header.Add("Content-Type", "application/json")
+		ideaRec := httptest.NewRecorder()
+
+		gin.ServeHTTP(ideaRec, ideaReq)
+
+		if ideaRec.Code != http.StatusOK {
+			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
+		}
+	})
 
 	t.Run("byID", func(t *testing.T) {
 		t.Skip()
@@ -26,11 +43,8 @@ func TestFetchIdeas(t *testing.T) {
 		t.Skip()
 	})
 
-	t.Run("allIdeas", func(t *testing.T) {
-		t.Skip()
-	})
-
-	// teardown
+	cleanupIdeas(db)
+	cleanupUser(db, user.Name)
 }
 
 func TestCreateIdea(t *testing.T) {
@@ -82,6 +96,20 @@ func TestCreateIdea(t *testing.T) {
 func TestDeleteIdeaByID(t *testing.T) {
 	// logged in user is needed
 	t.Skip()
+}
+
+func seedIdeas(db *gorm.DB, user domain.User) error {
+	idea := domain.Idea{
+		UserId:  user.ID,
+		Content: "some content that is suitable to a sample idea",
+	}
+
+	tx := db.Create(&idea)
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	return nil
 }
 
 func cleanupIdeas(db *gorm.DB) {

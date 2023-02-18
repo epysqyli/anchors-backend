@@ -67,6 +67,12 @@ func login(gin *gin.Engine, user domain.User) domain.LoginResponse {
 	return loginResp
 }
 
+func fetchUser(db *gorm.DB, userName string) (domain.User, error) {
+	var user domain.User
+	tx := db.Model(&domain.User{}).Where("name = ?", userName).First(&user)
+	return user, tx.Error
+}
+
 func cleanupUser(db *gorm.DB, userName string) {
 	var user domain.User
 	db.Model(&domain.User{}).Where("name = ?", userName).First(&user)
