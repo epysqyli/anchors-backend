@@ -33,13 +33,40 @@ func TestFetchIdeas(t *testing.T) {
 		if ideaRec.Code != http.StatusOK {
 			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
 		}
-	})
 
-	t.Run("byID", func(t *testing.T) {
-		t.Skip()
+		ideaResp := []domain.Idea{}
+		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
+
+		if len(ideaResp) != 2 {
+			t.Fatalf("Unexpected response body length: %d\n", len(ideaResp))
+		}
 	})
 
 	t.Run("byUserID", func(t *testing.T) {
+		endpoint := fmt.Sprintf("/v1/users/%d/ideas", user.ID)
+		ideaReq, err := http.NewRequest(http.MethodGet, endpoint, bytes.NewReader([]byte{}))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		ideaReq.Header.Add("Content-Type", "application/json")
+		ideaRec := httptest.NewRecorder()
+
+		gin.ServeHTTP(ideaRec, ideaReq)
+
+		if ideaRec.Code != http.StatusOK {
+			t.Fatalf("Unexpected response status code: %d\n", ideaRec.Code)
+		}
+
+		ideaResp := []domain.Idea{}
+		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
+
+		if len(ideaResp) != 2 {
+			t.Fatalf("Unexpected response body length: %d\n", len(ideaResp))
+		}
+	})
+
+	t.Run("byID", func(t *testing.T) {
 		t.Skip()
 	})
 
@@ -99,12 +126,17 @@ func TestDeleteIdeaByID(t *testing.T) {
 }
 
 func seedIdeas(db *gorm.DB, user domain.User) error {
-	idea := domain.Idea{
+	firstIdea := domain.Idea{
 		UserId:  user.ID,
-		Content: "some content that is suitable to a sample idea",
+		Content: "Some content that is suitable to a sample idea",
 	}
 
-	tx := db.Create(&idea)
+	secondIdea := domain.Idea{
+		UserId:  user.ID,
+		Content: "Some other content which is still suitable",
+	}
+
+	tx := db.CreateInBatches([]domain.Idea{firstIdea, secondIdea}, 2)
 	if tx.Error != nil {
 		return tx.Error
 	}

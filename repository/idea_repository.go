@@ -24,7 +24,7 @@ func (ir *IdeaRepository) Create(c context.Context, idea *domain.Idea) error {
 
 func (ir *IdeaRepository) FetchAll(c context.Context) ([]domain.Idea, error) {
 	var ideas []domain.Idea
-	res := ir.database.Find(&domain.Idea{})
+	res := ir.database.Find(&ideas)
 	return ideas, res.Error
 }
 

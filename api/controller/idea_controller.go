@@ -14,13 +14,23 @@ type IdeaController struct {
 
 func (ic *IdeaController) FetchIdeaByID(ctx *gin.Context) {}
 
-func (ic *IdeaController) FetchIdeasByUserID(ctx *gin.Context) {}
+func (ic *IdeaController) FetchIdeasByUserID(ctx *gin.Context) {
+	userID := ctx.Param("user_id")
+	ideas, err := ic.IdeaRepository.FetchByUserID(ctx, userID)
+
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, domain.ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, ideas)
+}
 
 func (ic *IdeaController) FetchAllIdeas(ctx *gin.Context) {
 	ideas, err := ic.IdeaRepository.FetchAll(ctx)
 
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, domain.ErrorResponse{})
+		ctx.JSON(http.StatusNotFound, domain.ErrorResponse{Message: err.Error()})
 		return
 	}
 
