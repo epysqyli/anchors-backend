@@ -7,6 +7,7 @@ type User struct {
 	Name     string `json:"name" gorm:"unique"`
 	Email    string `json:"email" gorm:"unique"`
 	Password string `json:"password"`
+	Ideas    []Idea
 }
 
 type UserRepository interface {
