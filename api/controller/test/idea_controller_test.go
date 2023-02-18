@@ -2,10 +2,14 @@ package controller
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/epysqyli/anchors-backend/domain"
+	"gorm.io/gorm"
 )
 
 func TestFetchIdeas(t *testing.T) {
@@ -35,7 +39,8 @@ func TestCreateIdea(t *testing.T) {
 
 	t.Run("basicIdea", func(t *testing.T) {
 		// arrange
-		ideaReqBody := []byte(`{"content": "this is a test idea"}`)
+		content := "this is a test idea"
+		ideaReqBody := []byte(fmt.Sprintf(`{"content": "%s"}`, content))
 		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
 		if err != nil {
 			t.Fatalf("could not create request: %v\n", err)
@@ -52,6 +57,14 @@ func TestCreateIdea(t *testing.T) {
 		if ideaRec.Code != http.StatusCreated {
 			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
 		}
+
+		ideaResp := domain.Idea{}
+		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
+
+		if ideaResp.Content != content {
+			t.Fatalf("Response returned with an unexpected content: \texpected: %s\n\tobtained: %s\n",
+				content, ideaResp.Content)
+		}
 	})
 
 	t.Run("ideaWithOneResource", func(t *testing.T) {
@@ -62,11 +75,15 @@ func TestCreateIdea(t *testing.T) {
 		t.Skip()
 	})
 
-	// cleanup idea and other resources from db
+	cleanupIdeas(db)
 	cleanupUser(db, sampleUser().Name)
 }
 
 func TestDeleteIdeaByID(t *testing.T) {
 	// logged in user is needed
 	t.Skip()
+}
+
+func cleanupIdeas(db *gorm.DB) {
+	db.Exec("delete from ideas")
 }
