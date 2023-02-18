@@ -39,3 +39,9 @@ func (ir *IdeaRepository) FetchByID(c context.Context, id string) (domain.Idea, 
 	res := ir.database.First(&idea, id)
 	return idea, res.Error
 }
+
+func (ir *IdeaRepository) DeleteByID(c context.Context, id string) error {
+	var idea domain.Idea
+	tx := ir.database.Delete(&idea, id)
+	return tx.Error
+}

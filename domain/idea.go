@@ -18,4 +18,5 @@ type IdeaRepository interface {
 	FetchByUserID(c context.Context, userId string) ([]Idea, error)
 	FetchByID(c context.Context, id string) (Idea, error)
 	FetchAll(c context.Context) ([]Idea, error)
+	DeleteByID(c context.Context, id string) error
 }

@@ -141,8 +141,34 @@ func TestCreateIdea(t *testing.T) {
 }
 
 func TestDeleteIdeaByID(t *testing.T) {
-	// logged in user is needed
-	t.Skip()
+	gin, db := setup()
+	authTokens := signup(gin, sampleUser())
+	user, _ := fetchUser(db, sampleUser().Name)
+	ideas, _ := seedIdeas(db, user)
+
+	endpoint := fmt.Sprintf("/v1/ideas/%d", ideas[0].ID)
+	ideaReq, err := http.NewRequest(http.MethodDelete, endpoint, bytes.NewReader([]byte{}))
+	if err != nil {
+		t.Fatalf("could not create request: %v\n", err)
+	}
+
+	ideaReq.Header.Add("Content-Type", "application/json")
+	ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+	ideaRec := httptest.NewRecorder()
+
+	gin.ServeHTTP(ideaRec, ideaReq)
+
+	if ideaRec.Code != http.StatusAccepted {
+		t.Fatalf("Unexpected response status code: %d\n", ideaRec.Code)
+	}
+
+	remainingIdeas, _ := fetchIdeas(db)
+	if len(ideas) == len(remainingIdeas) {
+		t.Fatalf("Expected ideas slice length: %d, obtained: %d", len(ideas)-1, len(remainingIdeas))
+	}
+
+	cleanupIdeas(db)
+	cleanupUser(db, user.Name)
 }
 
 func seedIdeas(db *gorm.DB, user domain.User) ([]domain.Idea, error) {
@@ -163,7 +189,17 @@ func seedIdeas(db *gorm.DB, user domain.User) ([]domain.Idea, error) {
 
 	var ideas []domain.Idea
 	res := db.Find(&ideas)
-	if tx.Error != nil {
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	return ideas, nil
+}
+
+func fetchIdeas(db *gorm.DB) ([]domain.Idea, error) {
+	var ideas []domain.Idea
+	res := db.Find(&ideas)
+	if res.Error != nil {
 		return nil, res.Error
 	}
 

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -69,5 +70,13 @@ func (ic *IdeaController) CreateIdea(ctx *gin.Context) {
 }
 
 func (ic *IdeaController) DeleteIdeaByID(ctx *gin.Context) {
-	ctx.JSON(http.StatusNotFound, gin.H{})
+	id := ctx.Param("id")
+	err := ic.IdeaRepository.DeleteByID(ctx, id)
+
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, domain.ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusAccepted, domain.SuccessResponse{Message: fmt.Sprintf("Idea with id %s deleted", id)})
 }
