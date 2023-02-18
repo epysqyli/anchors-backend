@@ -34,11 +34,12 @@ func TestFetchIdeas(t *testing.T) {
 			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
 		}
 
-		ideaResp := []domain.Idea{}
-		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
+		ideasResp := []domain.Idea{}
+		json.NewDecoder(ideaRec.Body).Decode(&ideasResp)
 
-		if len(ideaResp) != 2 {
-			t.Fatalf("Unexpected response body length: %d\n", len(ideaResp))
+		ideas, _ = fetchIdeas(db)
+		if len(ideasResp) != len(ideas) {
+			t.Fatalf("Expected ideas slice length: %d, obtained: %d", len(ideasResp), len(ideas))
 		}
 	})
 
@@ -187,13 +188,8 @@ func seedIdeas(db *gorm.DB, user domain.User) ([]domain.Idea, error) {
 		return nil, tx.Error
 	}
 
-	var ideas []domain.Idea
-	res := db.Find(&ideas)
-	if res.Error != nil {
-		return nil, res.Error
-	}
-
-	return ideas, nil
+	ideas, err := fetchIdeas(db)
+	return ideas, err
 }
 
 func fetchIdeas(db *gorm.DB) ([]domain.Idea, error) {
