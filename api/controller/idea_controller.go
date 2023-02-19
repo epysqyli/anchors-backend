@@ -63,7 +63,7 @@ func (ic *IdeaController) CreateIdea(ctx *gin.Context) {
 	}
 
 	userID, _ := strconv.ParseInt(ctx.GetString("x-user-id"), 0, 32)
-	idea.UserId = uint(userID)
+	idea.UserID = uint(userID)
 
 	err = ic.IdeaRepository.Create(ctx, &idea)
 	if err != nil {

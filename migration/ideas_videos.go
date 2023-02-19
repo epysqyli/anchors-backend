@@ -6,16 +6,16 @@ import (
 	"gorm.io/gorm"
 )
 
-func IdeasResources() *gormigrate.Migration {
+func IdeasVideos() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "4",
 
 		Migrate: func(tx *gorm.DB) error {
-			return tx.AutoMigrate(&domain.IdeasResources{})
+			return tx.AutoMigrate(&domain.IdeasVideos{})
 		},
 
 		Rollback: func(tx *gorm.DB) error {
-			return tx.Migrator().DropTable("ideas_resources")
+			return tx.Migrator().DropTable("ideas_videos")
 		},
 	}
 }

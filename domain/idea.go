@@ -8,9 +8,9 @@ import (
 
 type Idea struct {
 	gorm.Model
-	UserId    uint       `json:"user_id" form:"user_id"`
-	Content   string     `json:"content" form:"content"`
-	Resources []Resource `gorm:"many2many:ideas_resources;" json:"resources" form:"resources"`
+	UserID  uint    `json:"user_id" form:"user_id"`
+	Content string  `json:"content" form:"content"`
+	Videos  []Video `gorm:"many2many:ideas_videos;" json:"videos" form:"videos"`
 }
 
 type IdeaRepository interface {

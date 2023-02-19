@@ -92,7 +92,7 @@ func TestFetchIdeas(t *testing.T) {
 	})
 
 	t.Cleanup(func() {
-		cleanupIdeas(db)
+		cleanupDatabase(db)
 		cleanupUser(db, user.Name)
 	})
 }
@@ -132,17 +132,18 @@ func TestCreateIdea(t *testing.T) {
 		}
 	})
 
-	t.Run("withResource", func(t *testing.T) {
+	t.Run("withResources", func(t *testing.T) {
 		// arrange
 		ideaReqBody := []byte(`{
 			"content": "Idea with resource video",
-			"resources": [
+			"videos": [
 				{
-					"url": "https://www.youtube.com/watch?v=8cX1aptP5Io&list=FL6zRqV5BoLaPshnUjI_oLPg&index=2&t=4161s&ab_channel=TheBitcoinLayer",
-					"resource_type": 3,
-					"specific_fields": {
-						"youtube_channel": "Some bitcoin channel"
-					}
+					"url": "https://www.youtube.com/watch?v=8cX1aptP5Io&list=FL6zRqV5BoLaPshnUjI_oLPg&ab_channel=TheBitcoinLayer",
+					"youtube_channel": "Some bitcoin channel"
+				},
+				{
+					"url": "https://www.youtube.com/watch?v=MAeYCvyjQgE&ab_channel=JordanBPetersonClips",
+					"youtube_channel": "Some bitcoin channel"
 				}
 			]
 		}`)
@@ -168,19 +169,17 @@ func TestCreateIdea(t *testing.T) {
 		ideaResp := domain.Idea{}
 		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
 
-		if len(ideaResp.Resources) == 0 {
+		if len(ideaResp.Videos) == 0 {
 			t.Fatalf("No associated resources found")
 		}
-
-		// check that fields from associated specific resource types are present
 	})
 
-	t.Run("WithMultipleResource", func(t *testing.T) {
+	t.Run("WithMultipleResourceTypes", func(t *testing.T) {
 		t.Skip()
 	})
 
 	t.Cleanup(func() {
-		cleanupIdeas(db)
+		cleanupDatabase(db)
 		cleanupUser(db, sampleUser().Name)
 	})
 }
@@ -213,19 +212,19 @@ func TestDeleteIdeaByID(t *testing.T) {
 	}
 
 	t.Cleanup(func() {
-		cleanupIdeas(db)
+		cleanupDatabase(db)
 		cleanupUser(db, user.Name)
 	})
 }
 
 func seedIdeas(db *gorm.DB, user domain.User) ([]domain.Idea, error) {
 	firstIdea := domain.Idea{
-		UserId:  user.ID,
+		UserID:  user.ID,
 		Content: "Some content that is suitable to a sample idea",
 	}
 
 	secondIdea := domain.Idea{
-		UserId:  user.ID,
+		UserID:  user.ID,
 		Content: "Some other content which is still suitable",
 	}
 
@@ -248,7 +247,8 @@ func fetchIdeas(db *gorm.DB) ([]domain.Idea, error) {
 	return ideas, nil
 }
 
-func cleanupIdeas(db *gorm.DB) {
-	db.Exec("delete from ideas_resources")
+func cleanupDatabase(db *gorm.DB) {
+	db.Exec("delete from ideas_videos")
+	db.Exec("delete from videos")
 	db.Exec("delete from ideas")
 }
