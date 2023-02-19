@@ -91,8 +91,10 @@ func TestFetchIdeas(t *testing.T) {
 		}
 	})
 
-	cleanupIdeas(db)
-	cleanupUser(db, user.Name)
+	t.Cleanup(func() {
+		cleanupUser(db, user.Name)
+		cleanupIdeas(db)
+	})
 }
 
 func TestCreateIdea(t *testing.T) {
@@ -130,6 +132,9 @@ func TestCreateIdea(t *testing.T) {
 	})
 
 	t.Run("ideaWithOneResource", func(t *testing.T) {
+		// create Video domain and repo
+		// create an idea associated to a youtube video
+		// return a json response with idea and associated resource
 		t.Skip()
 	})
 
@@ -137,8 +142,10 @@ func TestCreateIdea(t *testing.T) {
 		t.Skip()
 	})
 
-	cleanupIdeas(db)
-	cleanupUser(db, sampleUser().Name)
+	t.Cleanup(func() {
+		cleanupUser(db, sampleUser().Name)
+		cleanupIdeas(db)
+	})
 }
 
 func TestDeleteIdeaByID(t *testing.T) {
@@ -168,8 +175,10 @@ func TestDeleteIdeaByID(t *testing.T) {
 		t.Fatalf("Expected ideas slice length: %d, obtained: %d", len(ideas)-1, len(remainingIdeas))
 	}
 
-	cleanupIdeas(db)
-	cleanupUser(db, user.Name)
+	t.Cleanup(func() {
+		cleanupUser(db, user.Name)
+		cleanupIdeas(db)
+	})
 }
 
 func seedIdeas(db *gorm.DB, user domain.User) ([]domain.Idea, error) {
