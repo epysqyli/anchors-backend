@@ -18,4 +18,5 @@ type Resource struct {
 	gorm.Model
 	Url          string       `json:"url" form:"url"`
 	ResourceType ResourceType `json:"resource_type" form:"resource_type"`
+	// retrieve resources based on type, cannot have Videos []VideoResource for example
 }

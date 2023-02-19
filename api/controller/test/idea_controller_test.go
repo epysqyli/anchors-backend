@@ -101,6 +101,7 @@ func TestCreateIdea(t *testing.T) {
 	gin, db := setup()
 	authTokens := signup(gin, sampleUser())
 
+	// this test will eventually disappear as this behavior will not be permitted
 	t.Run("basicIdea", func(t *testing.T) {
 		// arrange
 		content := "this is a test idea"
@@ -131,14 +132,51 @@ func TestCreateIdea(t *testing.T) {
 		}
 	})
 
-	t.Run("ideaWithOneResource", func(t *testing.T) {
+	t.Run("withResource", func(t *testing.T) {
 		// create Video domain and repo
 		// create an idea associated to a youtube video
 		// return a json response with idea and associated resource
-		t.Skip()
+
+		// arrange
+		ideaReqBody := []byte(`{
+			"content": "Idea with resource video",
+			"resources": [
+				{
+					"url": "https://www.youtube.com/watch?v=8cX1aptP5Io&list=FL6zRqV5BoLaPshnUjI_oLPg&index=2&t=4161s&ab_channel=TheBitcoinLayer",
+					"resource_type": 3
+				}
+			]
+		}`)
+
+		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		ideaReq.Header.Add("Content-Type", "application/json")
+		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		ideaRec := httptest.NewRecorder()
+
+		// act
+		gin.ServeHTTP(ideaRec, ideaReq)
+
+		// assert
+		if ideaRec.Code != http.StatusCreated {
+			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
+		}
+
+		// additional checks based on resources array resp and content
+		ideaResp := domain.Idea{}
+		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
+
+		if len(ideaResp.Resources) == 0 {
+			t.Fatalf("No associated resources found")
+		}
+
+		// check that fields from associated specific resource types are present
 	})
 
-	t.Run("ideaWithMultipleResource", func(t *testing.T) {
+	t.Run("WithMultipleResource", func(t *testing.T) {
 		t.Skip()
 	})
 
