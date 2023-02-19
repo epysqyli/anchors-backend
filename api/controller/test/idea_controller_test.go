@@ -17,7 +17,7 @@ func TestFetchIdeas(t *testing.T) {
 	user := sampleUser()
 	signup(gin, user)
 	user, _ = fetchUser(db, user.Name)
-	ideas, _ := seedIdeas(db, user)
+	ideas := seedIdeas(db, user)
 
 	t.Run("all", func(t *testing.T) {
 		ideaReq, err := http.NewRequest(http.MethodGet, "/v1/ideas", bytes.NewReader([]byte{}))
@@ -37,7 +37,7 @@ func TestFetchIdeas(t *testing.T) {
 		ideasResp := []domain.Idea{}
 		json.NewDecoder(ideaRec.Body).Decode(&ideasResp)
 
-		ideas, _ = fetchIdeas(db)
+		ideas = fetchIdeas(db)
 		if len(ideasResp) != len(ideas) {
 			t.Fatalf("Expected ideas slice length: %d, obtained: %d", len(ideasResp), len(ideas))
 		}
@@ -229,6 +229,56 @@ func TestCreateIdea(t *testing.T) {
 		}
 	})
 
+	t.Run("preventDuplicateResource", func(t *testing.T) {
+		// arrange
+		url := "https://some-random-url.com"
+		createBlog(db, url)
+		blog := fetchBlogByUrl(db, url)
+		blogsArray := fmt.Sprintf(`"blogs": [{"id": %d, "url": "%s", "category": "%s"}]`, blog.ID, url, blog.Category)
+
+		ideaReqBody := []byte(fmt.Sprintf(
+			`{"content": "Some random idea that I'd like to publish", %s}`, blogsArray))
+
+		anotherIdeaReqBody := []byte(fmt.Sprintf(
+			`{"content": "Some random idea that I'd like to publish", %s}`, blogsArray))
+
+		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
+		anotherIdeaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(anotherIdeaReqBody))
+
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		ideaReq.Header.Add("Content-Type", "application/json")
+		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		ideaRec := httptest.NewRecorder()
+
+		anotherIdeaReq.Header.Add("Content-Type", "application/json")
+		anotherIdeaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		anotherIdeaRec := httptest.NewRecorder()
+
+		previousBlogsCount := len(fetchBlogs(db))
+
+		// act
+		gin.ServeHTTP(ideaRec, ideaReq)
+		gin.ServeHTTP(anotherIdeaRec, anotherIdeaReq)
+
+		// assert
+		if ideaRec.Code != http.StatusCreated {
+			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
+		}
+
+		if anotherIdeaRec.Code != http.StatusCreated {
+			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
+		}
+
+		currentBlogsCount := len(fetchBlogs(db))
+
+		if previousBlogsCount != currentBlogsCount {
+			t.Fatalf("Number of blogs increased from %d to %d", previousBlogsCount, currentBlogsCount)
+		}
+	})
+
 	t.Cleanup(func() {
 		cleanupDatabase(db)
 		cleanupUser(db, sampleUser().Name)
@@ -239,7 +289,7 @@ func TestDeleteIdeaByID(t *testing.T) {
 	gin, db := setup()
 	authTokens := signup(gin, sampleUser())
 	user, _ := fetchUser(db, sampleUser().Name)
-	ideas, _ := seedIdeas(db, user)
+	ideas := seedIdeas(db, user)
 
 	endpoint := fmt.Sprintf("/v1/ideas/%d", ideas[0].ID)
 	ideaReq, err := http.NewRequest(http.MethodDelete, endpoint, bytes.NewReader([]byte{}))
@@ -257,7 +307,7 @@ func TestDeleteIdeaByID(t *testing.T) {
 		t.Fatalf("Unexpected response status code: %d\n", ideaRec.Code)
 	}
 
-	remainingIdeas, _ := fetchIdeas(db)
+	remainingIdeas := fetchIdeas(db)
 	if len(ideas) == len(remainingIdeas) {
 		t.Fatalf("Expected ideas slice length: %d, obtained: %d", len(ideas)-1, len(remainingIdeas))
 	}
@@ -268,7 +318,7 @@ func TestDeleteIdeaByID(t *testing.T) {
 	})
 }
 
-func seedIdeas(db *gorm.DB, user domain.User) ([]domain.Idea, error) {
+func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 	firstIdea := domain.Idea{
 		UserID:  user.ID,
 		Content: "Some content that is suitable to a sample idea",
@@ -279,23 +329,40 @@ func seedIdeas(db *gorm.DB, user domain.User) ([]domain.Idea, error) {
 		Content: "Some other content which is still suitable",
 	}
 
-	tx := db.CreateInBatches([]domain.Idea{firstIdea, secondIdea}, 2)
-	if tx.Error != nil {
-		return nil, tx.Error
-	}
+	db.CreateInBatches([]domain.Idea{firstIdea, secondIdea}, 2)
 
-	ideas, err := fetchIdeas(db)
-	return ideas, err
+	ideas := fetchIdeas(db)
+	return ideas
 }
 
-func fetchIdeas(db *gorm.DB) ([]domain.Idea, error) {
+func fetchIdeas(db *gorm.DB) []domain.Idea {
 	var ideas []domain.Idea
-	res := db.Find(&ideas)
-	if res.Error != nil {
-		return nil, res.Error
+	db.Find(&ideas)
+
+	return ideas
+}
+
+func createBlog(db *gorm.DB, url string) {
+	blog := domain.Blog{
+		Url:      url,
+		Category: "software development",
 	}
 
-	return ideas, nil
+	db.Create(&blog)
+}
+
+func fetchBlogByUrl(db *gorm.DB, url string) domain.Blog {
+	var blog domain.Blog
+	db.Model(&domain.Blog{}).Where("url = ?", url).First(&blog)
+	return blog
+}
+
+// make a generic fetch func?
+func fetchBlogs(db *gorm.DB) []domain.Blog {
+	var blogs []domain.Blog
+	db.Find(&blogs)
+
+	return blogs
 }
 
 func cleanupDatabase(db *gorm.DB) {
