@@ -174,8 +174,59 @@ func TestCreateIdea(t *testing.T) {
 		}
 	})
 
-	t.Run("WithMultipleResourceTypes", func(t *testing.T) {
-		t.Skip()
+	t.Run("withMultipleResourceTypes", func(t *testing.T) {
+		// arrange
+		ideaReqBody := []byte(`{
+				"content": "Idea with video and blog resources",
+				"videos": [
+					{
+						"url": "https://www.youtube.com/watch?v=8cX1aptP5Io&list=FL6zRqV5BoLaPshnUjI_oLPg&ab_channel=TheBitcoinLayer",
+						"youtube_channel": "Some bitcoin channel"
+					},
+					{
+						"url": "https://www.youtube.com/watch?v=MAeYCvyjQgE&ab_channel=JordanBPetersonClips",
+						"youtube_channel": "Some bitcoin channel"
+					}
+				],
+				"blogs": [
+					{
+						"url": "https://mtlynch.io/solo-developer-year-5/",
+						"category": "software development"
+					},
+					{
+						"url": "https://matt-rickard.com/ask-dumb-questions",
+						"category": "software development"
+					}
+				]
+			}`)
+
+		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		ideaReq.Header.Add("Content-Type", "application/json")
+		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		ideaRec := httptest.NewRecorder()
+
+		// act
+		gin.ServeHTTP(ideaRec, ideaReq)
+
+		// assert
+		if ideaRec.Code != http.StatusCreated {
+			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
+		}
+
+		ideaResp := domain.Idea{}
+		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
+
+		if len(ideaResp.Videos) == 0 {
+			t.Fatalf("No videos found")
+		}
+
+		if len(ideaResp.Blogs) == 0 {
+			t.Fatalf("No blogs found")
+		}
 	})
 
 	t.Cleanup(func() {
@@ -250,5 +301,7 @@ func fetchIdeas(db *gorm.DB) ([]domain.Idea, error) {
 func cleanupDatabase(db *gorm.DB) {
 	db.Exec("delete from ideas_videos")
 	db.Exec("delete from videos")
+	db.Exec("delete from blogs_ideas")
+	db.Exec("delete from blogs")
 	db.Exec("delete from ideas")
 }
