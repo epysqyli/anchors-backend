@@ -48,6 +48,11 @@ func (ic *IdeaController) FetchAllIdeas(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, ideas)
 }
 
+/*
+* request comes in
+* associated resources are created based on the resource type
+* JSON resp is returned with all the necessary associations
+ */
 func (ic *IdeaController) CreateIdea(ctx *gin.Context) {
 	var idea domain.Idea
 

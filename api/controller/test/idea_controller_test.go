@@ -92,8 +92,8 @@ func TestFetchIdeas(t *testing.T) {
 	})
 
 	t.Cleanup(func() {
-		cleanupUser(db, user.Name)
 		cleanupIdeas(db)
+		cleanupUser(db, user.Name)
 	})
 }
 
@@ -180,8 +180,8 @@ func TestCreateIdea(t *testing.T) {
 	})
 
 	t.Cleanup(func() {
-		cleanupUser(db, sampleUser().Name)
 		cleanupIdeas(db)
+		cleanupUser(db, sampleUser().Name)
 	})
 }
 
@@ -213,8 +213,8 @@ func TestDeleteIdeaByID(t *testing.T) {
 	}
 
 	t.Cleanup(func() {
-		cleanupUser(db, user.Name)
 		cleanupIdeas(db)
+		cleanupUser(db, user.Name)
 	})
 }
 
