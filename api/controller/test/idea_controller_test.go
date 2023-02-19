@@ -102,7 +102,7 @@ func TestCreateIdea(t *testing.T) {
 	authTokens := signup(gin, sampleUser())
 
 	// this test will eventually disappear as this behavior will not be permitted
-	t.Run("basicIdea", func(t *testing.T) {
+	t.Run("noResources", func(t *testing.T) {
 		// arrange
 		content := "this is a test idea"
 		ideaReqBody := []byte(fmt.Sprintf(`{"content": "%s"}`, content))
@@ -133,17 +133,16 @@ func TestCreateIdea(t *testing.T) {
 	})
 
 	t.Run("withResource", func(t *testing.T) {
-		// create Video domain and repo
-		// create an idea associated to a youtube video
-		// return a json response with idea and associated resource
-
 		// arrange
 		ideaReqBody := []byte(`{
 			"content": "Idea with resource video",
 			"resources": [
 				{
 					"url": "https://www.youtube.com/watch?v=8cX1aptP5Io&list=FL6zRqV5BoLaPshnUjI_oLPg&index=2&t=4161s&ab_channel=TheBitcoinLayer",
-					"resource_type": 3
+					"resource_type": 3,
+					"specific_fields": {
+						"youtube_channel": "Some bitcoin channel"
+					}
 				}
 			]
 		}`)
@@ -250,5 +249,6 @@ func fetchIdeas(db *gorm.DB) ([]domain.Idea, error) {
 }
 
 func cleanupIdeas(db *gorm.DB) {
+	db.Exec("delete from ideas_resources")
 	db.Exec("delete from ideas")
 }

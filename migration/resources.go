@@ -8,7 +8,7 @@ import (
 
 func Resources() *gormigrate.Migration {
 	return &gormigrate.Migration{
-		ID: "4",
+		ID: "3",
 
 		Migrate: func(tx *gorm.DB) error {
 			return tx.AutoMigrate(&domain.Resource{})

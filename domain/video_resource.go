@@ -7,3 +7,7 @@ type VideoResource struct {
 	ResourceID     uint   `json:"resource_id"`
 	YoutubeChannel string `json:"youtube_channel"` // to be analyzed
 }
+
+func (VideoResource) TableName() string {
+	return "videos"
+}

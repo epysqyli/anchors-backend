@@ -4,12 +4,12 @@ import (
 	"time"
 )
 
-type IdeaResource struct {
+type IdeasResources struct {
 	IdeaId     uint `gorm:"primaryKey"`
 	ResourceId uint `gorm:"primaryKey"`
 	CreatedAt  time.Time
 }
 
-func (IdeaResource) TableName() string {
+func (IdeasResources) TableName() string {
 	return "ideas_resources"
 }
