@@ -229,7 +229,7 @@ func TestCreateIdea(t *testing.T) {
 		}
 	})
 
-	t.Run("preventDuplicateResource", func(t *testing.T) {
+	t.Run("preventDuplicateBlogs", func(t *testing.T) {
 		// arrange
 		url := "https://some-random-url.com"
 		createBlog(db, url)
@@ -276,6 +276,56 @@ func TestCreateIdea(t *testing.T) {
 
 		if previousBlogsCount != currentBlogsCount {
 			t.Fatalf("Number of blogs increased from %d to %d", previousBlogsCount, currentBlogsCount)
+		}
+	})
+
+	t.Run("preventDuplicateVideos", func(t *testing.T) {
+		// arrange
+		url := "https://some-random-url.com"
+		createVideo(db, url)
+		video := fetchVideoByUrl(db, url)
+		videoArray := fmt.Sprintf(`"videos": [{"id": %d, "url": "%s", "youtube_channel": "%s"}]`, video.ID, url, video.YoutubeChannel)
+
+		ideaReqBody := []byte(fmt.Sprintf(
+			`{"content": "Some random idea that I'd like to publish", %s}`, videoArray))
+
+		anotherIdeaReqBody := []byte(fmt.Sprintf(
+			`{"content": "Some random idea that I'd like to publish", %s}`, videoArray))
+
+		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
+		anotherIdeaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(anotherIdeaReqBody))
+
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		ideaReq.Header.Add("Content-Type", "application/json")
+		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		ideaRec := httptest.NewRecorder()
+
+		anotherIdeaReq.Header.Add("Content-Type", "application/json")
+		anotherIdeaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		anotherIdeaRec := httptest.NewRecorder()
+
+		previousVideosCount := len(fetchVideos(db))
+
+		// act
+		gin.ServeHTTP(ideaRec, ideaReq)
+		gin.ServeHTTP(anotherIdeaRec, anotherIdeaReq)
+
+		// assert
+		if ideaRec.Code != http.StatusCreated {
+			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
+		}
+
+		if anotherIdeaRec.Code != http.StatusCreated {
+			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
+		}
+
+		currentVideosCount := len(fetchVideos(db))
+
+		if previousVideosCount != currentVideosCount {
+			t.Fatalf("Number of blogs increased from %d to %d", previousVideosCount, currentVideosCount)
 		}
 	})
 
@@ -357,12 +407,34 @@ func fetchBlogByUrl(db *gorm.DB, url string) domain.Blog {
 	return blog
 }
 
+func createVideo(db *gorm.DB, url string) {
+	video := domain.Video{
+		Url:            url,
+		YoutubeChannel: "some-channel",
+	}
+
+	db.Create(&video)
+}
+
+func fetchVideoByUrl(db *gorm.DB, url string) domain.Video {
+	var video domain.Video
+	db.Model(&domain.Video{}).Where("url = ?", url).First(&video)
+	return video
+}
+
 // make a generic fetch func?
 func fetchBlogs(db *gorm.DB) []domain.Blog {
 	var blogs []domain.Blog
 	db.Find(&blogs)
 
 	return blogs
+}
+
+func fetchVideos(db *gorm.DB) []domain.Video {
+	var videos []domain.Video
+	db.Find(&videos)
+
+	return videos
 }
 
 func cleanupDatabase(db *gorm.DB) {

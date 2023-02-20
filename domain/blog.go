@@ -4,6 +4,6 @@ import "gorm.io/gorm"
 
 type Blog struct {
 	gorm.Model
-	Url      string `json:"url" gorm:"unique_index:blog_url"`
+	Url      string `json:"url"`
 	Category string `json:"category"`
 }
