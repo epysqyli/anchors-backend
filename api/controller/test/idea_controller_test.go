@@ -37,7 +37,7 @@ func TestFetchIdeas(t *testing.T) {
 		ideasResp := []domain.Idea{}
 		json.NewDecoder(ideaRec.Body).Decode(&ideasResp)
 
-		ideas = fetchIdeas(db)
+		ideas := fetchResources(db, []domain.Idea{})
 		if len(ideasResp) != len(ideas) {
 			t.Fatalf("Expected ideas slice length: %d, obtained: %d", len(ideasResp), len(ideas))
 		}
@@ -231,10 +231,9 @@ func TestCreateIdea(t *testing.T) {
 
 	t.Run("preventDuplicateBlogs", func(t *testing.T) {
 		// arrange
-		url := "https://some-random-url.com"
-		createBlog(db, url)
-		blog := fetchBlogByUrl(db, url)
-		blogsArray := fmt.Sprintf(`"blogs": [{"id": %d, "url": "%s", "category": "%s"}]`, blog.ID, url, blog.Category)
+		db.Create(&domain.Blog{Url: "https://some-random-url.com", Category: "some-category"})
+		blog := fetchResourceByUrl(db, &domain.Blog{}, "https://some-random-url.com")
+		blogsArray := fmt.Sprintf(`"blogs": [{"id": %d, "url": "%s", "category": "%s"}]`, blog.ID, blog.Url, blog.Category)
 
 		ideaReqBody := []byte(fmt.Sprintf(
 			`{"content": "Some random idea that I'd like to publish", %s}`, blogsArray))
@@ -257,7 +256,7 @@ func TestCreateIdea(t *testing.T) {
 		anotherIdeaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
 		anotherIdeaRec := httptest.NewRecorder()
 
-		previousBlogsCount := len(fetchBlogs(db))
+		previousBlogsCount := len(fetchResources(db, []domain.Blog{}))
 
 		// act
 		gin.ServeHTTP(ideaRec, ideaReq)
@@ -272,7 +271,7 @@ func TestCreateIdea(t *testing.T) {
 			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
 		}
 
-		currentBlogsCount := len(fetchBlogs(db))
+		currentBlogsCount := len(fetchResources(db, []domain.Blog{}))
 
 		if previousBlogsCount != currentBlogsCount {
 			t.Fatalf("Number of blogs increased from %d to %d", previousBlogsCount, currentBlogsCount)
@@ -281,10 +280,9 @@ func TestCreateIdea(t *testing.T) {
 
 	t.Run("preventDuplicateVideos", func(t *testing.T) {
 		// arrange
-		url := "https://some-random-url.com"
-		createVideo(db, url)
-		video := fetchVideoByUrl(db, url)
-		videoArray := fmt.Sprintf(`"videos": [{"id": %d, "url": "%s", "youtube_channel": "%s"}]`, video.ID, url, video.YoutubeChannel)
+		db.Create(&domain.Video{Url: "https://some-random-url.com", YoutubeChannel: "some-channel"})
+		video := fetchResourceByUrl(db, &domain.Video{}, "https://some-random-url.com")
+		videoArray := fmt.Sprintf(`"videos": [{"id": %d, "url": "%s", "youtube_channel": "%s"}]`, video.ID, video.Url, video.YoutubeChannel)
 
 		ideaReqBody := []byte(fmt.Sprintf(
 			`{"content": "Some random idea that I'd like to publish", %s}`, videoArray))
@@ -307,7 +305,7 @@ func TestCreateIdea(t *testing.T) {
 		anotherIdeaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
 		anotherIdeaRec := httptest.NewRecorder()
 
-		previousVideosCount := len(fetchVideos(db))
+		previousVideosCount := len(fetchResources(db, []domain.Video{}))
 
 		// act
 		gin.ServeHTTP(ideaRec, ideaReq)
@@ -322,7 +320,7 @@ func TestCreateIdea(t *testing.T) {
 			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
 		}
 
-		currentVideosCount := len(fetchVideos(db))
+		currentVideosCount := len(fetchResources(db, []domain.Video{}))
 
 		if previousVideosCount != currentVideosCount {
 			t.Fatalf("Number of blogs increased from %d to %d", previousVideosCount, currentVideosCount)
@@ -357,7 +355,7 @@ func TestDeleteIdeaByID(t *testing.T) {
 		t.Fatalf("Unexpected response status code: %d\n", ideaRec.Code)
 	}
 
-	remainingIdeas := fetchIdeas(db)
+	remainingIdeas := fetchResources(db, []domain.Idea{})
 	if len(ideas) == len(remainingIdeas) {
 		t.Fatalf("Expected ideas slice length: %d, obtained: %d", len(ideas)-1, len(remainingIdeas))
 	}
@@ -381,60 +379,18 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 
 	db.CreateInBatches([]domain.Idea{firstIdea, secondIdea}, 2)
 
-	ideas := fetchIdeas(db)
+	ideas := fetchResources(db, []domain.Idea{})
 	return ideas
 }
 
-func fetchIdeas(db *gorm.DB) []domain.Idea {
-	var ideas []domain.Idea
-	db.Find(&ideas)
-
-	return ideas
+func fetchResources[M any](db *gorm.DB, resources []M) []M {
+	db.Find(&resources)
+	return resources
 }
 
-func createBlog(db *gorm.DB, url string) {
-	blog := domain.Blog{
-		Url:      url,
-		Category: "software development",
-	}
-
-	db.Create(&blog)
-}
-
-func fetchBlogByUrl(db *gorm.DB, url string) domain.Blog {
-	var blog domain.Blog
-	db.Model(&domain.Blog{}).Where("url = ?", url).First(&blog)
-	return blog
-}
-
-func createVideo(db *gorm.DB, url string) {
-	video := domain.Video{
-		Url:            url,
-		YoutubeChannel: "some-channel",
-	}
-
-	db.Create(&video)
-}
-
-func fetchVideoByUrl(db *gorm.DB, url string) domain.Video {
-	var video domain.Video
-	db.Model(&domain.Video{}).Where("url = ?", url).First(&video)
-	return video
-}
-
-// make a generic fetch func?
-func fetchBlogs(db *gorm.DB) []domain.Blog {
-	var blogs []domain.Blog
-	db.Find(&blogs)
-
-	return blogs
-}
-
-func fetchVideos(db *gorm.DB) []domain.Video {
-	var videos []domain.Video
-	db.Find(&videos)
-
-	return videos
+func fetchResourceByUrl[M any](db *gorm.DB, resource *M, url string) *M {
+	db.Model(resource).Where("url = ?", url).First(&resource)
+	return resource
 }
 
 func cleanupDatabase(db *gorm.DB) {
