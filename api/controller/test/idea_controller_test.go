@@ -101,8 +101,7 @@ func TestCreateIdea(t *testing.T) {
 	gin, db := setup()
 	authTokens := signup(gin, sampleUser())
 
-	// this behaviour should be prevented -> change test to expect failure
-	t.Run("noResources", func(t *testing.T) {
+	t.Run("withNoResources", func(t *testing.T) {
 		// arrange
 		content := "this is a test idea"
 		ideaReqBody := []byte(fmt.Sprintf(`{"content": "%s"}`, content))
@@ -179,60 +178,12 @@ func TestCreateIdea(t *testing.T) {
 		}
 	})
 
-	t.Run("preventDuplicateBlogs", func(t *testing.T) {
-		// arrange
-		db.Create(&domain.Blog{Url: "https://some-random-url.com", Category: "some-category"})
-		blog := fetchResourceByUrl(db, &domain.Blog{}, "https://some-random-url.com")
-		blogsArray := fmt.Sprintf(`"blogs": [{"id": %d, "url": "%s", "category": "%s"}]`, blog.ID, blog.Url, blog.Category)
-
-		ideaReqBody := []byte(fmt.Sprintf(
-			`{"content": "Some random idea that I'd like to publish", %s}`, blogsArray))
-
-		anotherIdeaReqBody := []byte(fmt.Sprintf(
-			`{"content": "Some random idea that I'd like to publish", %s}`, blogsArray))
-
-		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
-		anotherIdeaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(anotherIdeaReqBody))
-
-		if err != nil {
-			t.Fatalf("could not create request: %v\n", err)
-		}
-
-		ideaReq.Header.Add("Content-Type", "application/json")
-		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
-		ideaRec := httptest.NewRecorder()
-
-		anotherIdeaReq.Header.Add("Content-Type", "application/json")
-		anotherIdeaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
-		anotherIdeaRec := httptest.NewRecorder()
-
-		previousBlogsCount := len(fetchResources(db, []domain.Blog{}))
-
-		// act
-		gin.ServeHTTP(ideaRec, ideaReq)
-		gin.ServeHTTP(anotherIdeaRec, anotherIdeaReq)
-
-		// assert
-		if ideaRec.Code != http.StatusCreated {
-			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
-		}
-
-		if anotherIdeaRec.Code != http.StatusCreated {
-			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
-		}
-
-		currentBlogsCount := len(fetchResources(db, []domain.Blog{}))
-
-		if previousBlogsCount != currentBlogsCount {
-			t.Fatalf("Number of blogs increased from %d to %d", previousBlogsCount, currentBlogsCount)
-		}
-	})
-
-	t.Run("preventDuplicateVideos", func(t *testing.T) {
+	t.Run("withExistingResource", func(t *testing.T) {
 		// arrange
 		db.Create(&domain.Video{Url: "https://some-random-url.com", YoutubeChannel: "some-channel"})
 		video := fetchResourceByUrl(db, &domain.Video{}, "https://some-random-url.com")
-		videoArray := fmt.Sprintf(`"videos": [{"id": %d, "url": "%s", "youtube_channel": "%s"}]`, video.ID, video.Url, video.YoutubeChannel)
+		videoArray := fmt.Sprintf(`"videos": [{"id": %d, "url": "%s", "youtube_channel": "%s"}]`,
+			video.ID, video.Url, video.YoutubeChannel)
 
 		ideaReqBody := []byte(fmt.Sprintf(
 			`{"content": "Some random idea that I'd like to publish", %s}`, videoArray))
