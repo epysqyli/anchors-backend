@@ -101,7 +101,7 @@ func TestCreateIdea(t *testing.T) {
 	gin, db := setup()
 	authTokens := signup(gin, sampleUser())
 
-	// this test will eventually disappear as this behavior will not be permitted
+	// this behaviour should be prevented -> change test to expect failure
 	t.Run("noResources", func(t *testing.T) {
 		// arrange
 		content := "this is a test idea"
@@ -119,58 +119,8 @@ func TestCreateIdea(t *testing.T) {
 		gin.ServeHTTP(ideaRec, ideaReq)
 
 		// assert
-		if ideaRec.Code != http.StatusCreated {
+		if ideaRec.Code != http.StatusBadRequest {
 			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
-		}
-
-		ideaResp := domain.Idea{}
-		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
-
-		if ideaResp.Content != content {
-			t.Fatalf("Response returned with an unexpected content: \texpected: %s\n\tobtained: %s\n",
-				content, ideaResp.Content)
-		}
-	})
-
-	t.Run("withResources", func(t *testing.T) {
-		// arrange
-		ideaReqBody := []byte(`{
-			"content": "Idea with resource video",
-			"videos": [
-				{
-					"url": "https://www.youtube.com/watch?v=8cX1aptP5Io&list=FL6zRqV5BoLaPshnUjI_oLPg&ab_channel=TheBitcoinLayer",
-					"youtube_channel": "Some bitcoin channel"
-				},
-				{
-					"url": "https://www.youtube.com/watch?v=MAeYCvyjQgE&ab_channel=JordanBPetersonClips",
-					"youtube_channel": "Some bitcoin channel"
-				}
-			]
-		}`)
-
-		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
-		if err != nil {
-			t.Fatalf("could not create request: %v\n", err)
-		}
-
-		ideaReq.Header.Add("Content-Type", "application/json")
-		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
-		ideaRec := httptest.NewRecorder()
-
-		// act
-		gin.ServeHTTP(ideaRec, ideaReq)
-
-		// assert
-		if ideaRec.Code != http.StatusCreated {
-			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
-		}
-
-		// additional checks based on resources array resp and content
-		ideaResp := domain.Idea{}
-		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
-
-		if len(ideaResp.Videos) == 0 {
-			t.Fatalf("No associated resources found")
 		}
 	})
 

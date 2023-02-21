@@ -8,10 +8,10 @@ import (
 
 type Idea struct {
 	gorm.Model
-	UserID  uint    `json:"user_id" form:"user_id"`
-	Content string  `json:"content" form:"content"`
-	Videos  []Video `gorm:"many2many:ideas_videos;" json:"videos" form:"videos"`
-	Blogs   []Blog  `gorm:"many2many:blogs_ideas;" json:"blogs" form:"blogs"`
+	UserID  uint    `json:"user_id"`
+	Content string  `json:"content"`
+	Videos  []Video `gorm:"many2many:ideas_videos;" json:"videos"`
+	Blogs   []Blog  `gorm:"many2many:blogs_ideas;" json:"blogs"`
 }
 
 type IdeaRepository interface {
@@ -20,4 +20,12 @@ type IdeaRepository interface {
 	FetchByID(c context.Context, id string) (Idea, error)
 	FetchAll(c context.Context) ([]Idea, error)
 	DeleteByID(c context.Context, id string) error
+}
+
+func (idea Idea) HasNoResources() bool {
+	if idea.Blogs == nil && idea.Videos == nil {
+		return true
+	}
+
+	return false
 }
