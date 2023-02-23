@@ -19,7 +19,12 @@ func NewIdeaRepository(db *gorm.DB) domain.IdeaRepository {
 
 func (ir *IdeaRepository) Create(c context.Context, idea *domain.Idea) error {
 	res := ir.database.Create(idea)
-	return res.Error
+	if res.Error != nil {
+		return res.Error
+	}
+
+	ir.assignRelationFields(idea)
+	return nil
 }
 
 func (ir *IdeaRepository) FetchAll(c context.Context) ([]domain.Idea, error) {
@@ -44,4 +49,18 @@ func (ir *IdeaRepository) DeleteByID(c context.Context, id string) error {
 	var idea domain.Idea
 	tx := ir.database.Delete(&idea, id)
 	return tx.Error
+}
+
+/**
+ *	can this be done with an afterCreate DB hook?
+ *  can this procedure be generalized to all resource types?
+ *  alternatively, we can case switch over resource types
+ *  can db calls be limited to a single call?
+ */
+func (ir *IdeaRepository) assignRelationFields(idea *domain.Idea) {
+	for _, video := range idea.Videos {
+		ir.database.
+			Model(domain.IdeasVideos{IdeaID: idea.ID, VideoID: video.ID}).
+			Update("timestamp", video.Timestamp)
+	}
 }

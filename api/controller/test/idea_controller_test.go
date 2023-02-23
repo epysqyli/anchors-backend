@@ -130,11 +130,13 @@ func TestCreateIdea(t *testing.T) {
 				"videos": [
 					{
 						"url": "https://www.youtube.com/watch?v=8cX1aptP5Io&list=FL6zRqV5BoLaPshnUjI_oLPg&ab_channel=TheBitcoinLayer",
-						"youtube_channel": "Some bitcoin channel"
+						"youtube_channel": "Some bitcoin channel",
+						"timestamp": 124
 					},
 					{
 						"url": "https://www.youtube.com/watch?v=MAeYCvyjQgE&ab_channel=JordanBPetersonClips",
-						"youtube_channel": "Some bitcoin channel"
+						"youtube_channel": "Some bitcoin channel",
+						"timestamp": 99
 					}
 				],
 				"blogs": [
@@ -175,6 +177,28 @@ func TestCreateIdea(t *testing.T) {
 
 		if len(ideaResp.Blogs) == 0 {
 			t.Fatalf("No blogs found")
+		}
+
+		firstIdeaVideoRelation := domain.IdeasVideos{
+			IdeaID:  ideaResp.ID,
+			VideoID: ideaResp.Videos[0].ID,
+		}
+		db.Find(&firstIdeaVideoRelation)
+
+		if firstIdeaVideoRelation.Timestamp != 124 {
+			t.Fatalf("Timestamp not correctly assigned\n\texpected: %d\n\tgot: %d",
+				124, firstIdeaVideoRelation.Timestamp)
+		}
+
+		secondIdeaVideoRelation := domain.IdeasVideos{
+			IdeaID:  ideaResp.ID,
+			VideoID: ideaResp.Videos[1].ID,
+		}
+		db.Find(&secondIdeaVideoRelation)
+
+		if secondIdeaVideoRelation.Timestamp != 99 {
+			t.Fatalf("Timestamp not correctly assigned\n\texpected: %d\n\tgot: %d",
+				99, secondIdeaVideoRelation.Timestamp)
 		}
 	})
 
