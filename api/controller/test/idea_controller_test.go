@@ -201,6 +201,13 @@ func TestCreateIdea(t *testing.T) {
 			t.Fatalf("Timestamp not correctly assigned\n\texpected: %d\n\tgot: %d",
 				99, secondIdeaVideoRelation.Timestamp)
 		}
+
+		blogsIdeasRelations := []domain.BlogsIdeas{}
+		db.Find(&blogsIdeasRelations)
+
+		if len(blogsIdeasRelations) != 2 {
+			t.Fatalf("Wrong number of blogs ideas relations\n\texpected: %d\n\tgot: %d", 2, len(blogsIdeasRelations))
+		}
 	})
 
 	t.Run("withExistingResource", func(t *testing.T) {
