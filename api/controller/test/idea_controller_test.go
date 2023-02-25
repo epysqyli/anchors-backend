@@ -19,6 +19,7 @@ func TestFetchIdeas(t *testing.T) {
 	user, _ = fetchUser(db, user.Name)
 	ideas := seedIdeas(db, user)
 
+	// check for associated resources
 	t.Run("all", func(t *testing.T) {
 		ideaReq, err := http.NewRequest(http.MethodGet, "/v1/ideas", bytes.NewReader([]byte{}))
 		if err != nil {
@@ -43,6 +44,7 @@ func TestFetchIdeas(t *testing.T) {
 		}
 	})
 
+	// check for associated resources
 	t.Run("byUserID", func(t *testing.T) {
 		endpoint := fmt.Sprintf("/v1/users/%d/ideas", user.ID)
 		ideaReq, err := http.NewRequest(http.MethodGet, endpoint, bytes.NewReader([]byte{}))
@@ -68,7 +70,7 @@ func TestFetchIdeas(t *testing.T) {
 	})
 
 	t.Run("byID", func(t *testing.T) {
-		endpoint := fmt.Sprintf("/v1/ideas/%d", ideas[0].ID)
+		endpoint := fmt.Sprintf("/v1/ideas/%d", ideas[1].ID)
 		ideaReq, err := http.NewRequest(http.MethodGet, endpoint, bytes.NewReader([]byte{}))
 		if err != nil {
 			t.Fatalf("could not create request: %v\n", err)
@@ -86,8 +88,20 @@ func TestFetchIdeas(t *testing.T) {
 		ideaResp := domain.Idea{}
 		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
 
-		if ideaResp.Content != ideas[0].Content {
+		if ideaResp.Content != ideas[1].Content {
 			t.Fatalf("Unexpected response content:\n expected: %s\n obtained: %s\n", ideas[0].Content, ideaResp.Content)
+		}
+
+		if len(ideaResp.Blogs) == 0 {
+			t.Fatalf("Blogs missing, expected: %d, obtained: %d", 1, len(ideaResp.Blogs))
+		}
+
+		if len(ideaResp.Videos) == 0 {
+			t.Fatalf("Videos missing, expected: %d, obtained: %d", 1, len(ideaResp.Videos))
+		}
+
+		if len(ideaResp.Anchors) == 0 {
+			t.Fatalf("Anchor ideas missing, expected: %d, obtained: %d", 1, len(ideaResp.Anchors))
 		}
 	})
 
@@ -331,17 +345,20 @@ func TestDeleteIdeaByID(t *testing.T) {
 }
 
 func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
-	firstIdea := domain.Idea{
+	emptyIdea := domain.Idea{
 		UserID:  user.ID,
 		Content: "Some content that is suitable to a sample idea",
 	}
 
-	secondIdea := domain.Idea{
+	fullIdea := domain.Idea{
 		UserID:  user.ID,
-		Content: "Some other content which is still suitable",
+		Content: "Content for an idea anchored upon a blog",
+		Blogs:   []domain.Blog{{Url: "https://some-blog.com", Category: "science"}},
+		Videos:  []domain.Video{{Url: "https://some-youtube-video.com", YoutubeChannel: "cool-channel"}},
+		Anchors: []domain.Idea{emptyIdea},
 	}
 
-	db.CreateInBatches([]domain.Idea{firstIdea, secondIdea}, 2)
+	db.CreateInBatches([]domain.Idea{emptyIdea, fullIdea}, 2)
 
 	ideas := fetchResources(db, []domain.Idea{})
 	return ideas

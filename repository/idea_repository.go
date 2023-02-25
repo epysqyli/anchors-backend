@@ -39,9 +39,19 @@ func (ir *IdeaRepository) FetchByUserID(c context.Context, userId string) ([]dom
 	return ideas, res.Error
 }
 
+/**
+ * each 'preload' executes a query
+ * can gorm 'joins' be used to execute a single query on many to many tables?
+ * optimize when and if necessary
+ */
 func (ir *IdeaRepository) FetchByID(c context.Context, id string) (domain.Idea, error) {
 	var idea domain.Idea
-	res := ir.database.First(&idea, id)
+	res := ir.database.
+		Preload("Blogs").
+		Preload("Videos").
+		Preload("Anchors").
+		First(&idea, id)
+
 	return idea, res.Error
 }
 
