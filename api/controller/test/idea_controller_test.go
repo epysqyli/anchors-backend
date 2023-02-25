@@ -100,6 +100,7 @@ func TestFetchIdeas(t *testing.T) {
 func TestCreateIdea(t *testing.T) {
 	gin, db := setup()
 	authTokens := signup(gin, sampleUser())
+	user, _ := fetchUser(db, sampleUser().Name)
 
 	t.Run("withNoResources", func(t *testing.T) {
 		// arrange
@@ -252,6 +253,37 @@ func TestCreateIdea(t *testing.T) {
 		}
 	})
 
+	t.Run("withAnchorIdeas", func(t *testing.T) {
+		// arrange
+		ideas := seedIdeas(db, user)
+		ideaReqBody := []byte(fmt.Sprintf((`{"content": "Idea with video and blog resources",
+			"anchors": [{"id": %d}, {"id": %d}]}`), ideas[0].ID, ideas[1].ID))
+
+		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		ideaReq.Header.Add("Content-Type", "application/json")
+		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		ideaRec := httptest.NewRecorder()
+
+		// act
+		gin.ServeHTTP(ideaRec, ideaReq)
+
+		// assert
+		if ideaRec.Code != http.StatusCreated {
+			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
+		}
+
+		ideaResp := &domain.Idea{}
+		json.NewDecoder(ideaRec.Body).Decode(ideaResp)
+
+		if len(ideaResp.Anchors) != len(ideas) {
+			t.Fatalf("Expected %d anchor ideas, obtained %d\n", len(ideas), len(ideaResp.Anchors))
+		}
+	})
+
 	t.Cleanup(func() {
 		cleanupDatabase(db)
 		cleanupUser(db, sampleUser().Name)
@@ -319,6 +351,7 @@ func fetchResourceByUrl[M any](db *gorm.DB, resource *M, url string) *M {
 }
 
 func cleanupDatabase(db *gorm.DB) {
+	db.Exec("delete from ideas_anchors")
 	db.Exec("delete from ideas_videos")
 	db.Exec("delete from videos")
 	db.Exec("delete from blogs_ideas")

@@ -12,6 +12,7 @@ type Idea struct {
 	Content string  `json:"content"`
 	Videos  []Video `gorm:"many2many:ideas_videos;" json:"videos"`
 	Blogs   []Blog  `gorm:"many2many:blogs_ideas;" json:"blogs"`
+	Anchors []Idea  `gorm:"many2many:ideas_anchors;" json:"anchors"`
 }
 
 type IdeaRepository interface {
@@ -23,7 +24,9 @@ type IdeaRepository interface {
 }
 
 func (idea Idea) HasNoResources() bool {
-	if idea.Blogs == nil && idea.Videos == nil {
+	if idea.Blogs == nil &&
+		idea.Videos == nil &&
+		idea.Anchors == nil {
 		return true
 	}
 
