@@ -44,9 +44,7 @@ func TestFetchIdeas(t *testing.T) {
 		}
 	})
 
-	// check for associated resources
 	t.Run("byUserID", func(t *testing.T) {
-		t.Skip()
 		endpoint := fmt.Sprintf("/v1/users/%d/ideas", user.ID)
 		ideaReq, err := http.NewRequest(http.MethodGet, endpoint, bytes.NewReader([]byte{}))
 		if err != nil {
@@ -65,7 +63,7 @@ func TestFetchIdeas(t *testing.T) {
 		ideaResp := []domain.Idea{}
 		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
 
-		if len(ideaResp) != 2 {
+		if len(ideaResp) != len(ideas) {
 			t.Fatalf("Unexpected response body length: %d\n", len(ideaResp))
 		}
 	})

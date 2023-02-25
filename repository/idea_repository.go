@@ -35,7 +35,12 @@ func (ir *IdeaRepository) FetchAll(c context.Context) ([]domain.Idea, error) {
 
 func (ir *IdeaRepository) FetchByUserID(c context.Context, userId string) ([]domain.Idea, error) {
 	var ideas []domain.Idea
-	res := ir.database.Model(&domain.Idea{}).Find(&ideas, "user_id = ?", userId)
+	res := ir.database.Model(&domain.Idea{}).
+		Preload("Blogs").
+		Preload("Videos").
+		Preload("Anchors").
+		Find(&ideas, "user_id = ?", userId)
+
 	return ideas, res.Error
 }
 
@@ -63,8 +68,6 @@ func (ir *IdeaRepository) DeleteByID(c context.Context, id string) error {
 
 /**
  *	can this be done with an afterCreate DB hook?
- *  can this procedure be generalized to all resource types?
- *  alternatively, we can case switch over resource types
  *  can db calls be limited to a single call?
  */
 func (ir *IdeaRepository) assignRelationFields(idea *domain.Idea) {
