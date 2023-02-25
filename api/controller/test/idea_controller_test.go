@@ -42,6 +42,8 @@ func TestFetchIdeas(t *testing.T) {
 		if len(ideasResp) != len(ideas) {
 			t.Fatalf("Expected ideas slice length: %d, obtained: %d", len(ideasResp), len(ideas))
 		}
+
+		checkIdeaAssociations(t, &ideasResp[1])
 	})
 
 	t.Run("byUserID", func(t *testing.T) {
@@ -66,6 +68,8 @@ func TestFetchIdeas(t *testing.T) {
 		if len(ideaResp) != len(ideas) {
 			t.Fatalf("Unexpected response body length: %d\n", len(ideaResp))
 		}
+
+		checkIdeaAssociations(t, &ideaResp[1])
 	})
 
 	t.Run("byID", func(t *testing.T) {
@@ -91,17 +95,7 @@ func TestFetchIdeas(t *testing.T) {
 			t.Fatalf("Unexpected response content:\n expected: %s\n obtained: %s\n", ideas[0].Content, ideaResp.Content)
 		}
 
-		if len(ideaResp.Blogs) == 0 {
-			t.Fatalf("Blogs missing, expected: %d, obtained: %d", 1, len(ideaResp.Blogs))
-		}
-
-		if len(ideaResp.Videos) == 0 {
-			t.Fatalf("Videos missing, expected: %d, obtained: %d", 1, len(ideaResp.Videos))
-		}
-
-		if len(ideaResp.Anchors) == 0 {
-			t.Fatalf("Anchor ideas missing, expected: %d, obtained: %d", 1, len(ideaResp.Anchors))
-		}
+		checkIdeaAssociations(t, &ideaResp)
 	})
 
 	t.Cleanup(func() {
@@ -381,4 +375,18 @@ func cleanupDatabase(db *gorm.DB) {
 	db.Exec("delete from videos")
 	db.Exec("delete from blogs")
 	db.Exec("delete from ideas")
+}
+
+func checkIdeaAssociations(t *testing.T, idea *domain.Idea) {
+	if len(idea.Blogs) == 0 {
+		t.Fatalf("Blogs missing, expected: %d, obtained: %d", 1, len(idea.Blogs))
+	}
+
+	if len(idea.Videos) == 0 {
+		t.Fatalf("Videos missing, expected: %d, obtained: %d", 1, len(idea.Videos))
+	}
+
+	if len(idea.Anchors) == 0 {
+		t.Fatalf("Anchor ideas missing, expected: %d, obtained: %d", 1, len(idea.Anchors))
+	}
 }

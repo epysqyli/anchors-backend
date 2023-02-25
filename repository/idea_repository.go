@@ -27,9 +27,15 @@ func (ir *IdeaRepository) Create(c context.Context, idea *domain.Idea) error {
 	return nil
 }
 
+// the main general feed: pagination needs to be set up
 func (ir *IdeaRepository) FetchAll(c context.Context) ([]domain.Idea, error) {
 	var ideas []domain.Idea
-	res := ir.database.Find(&ideas)
+	res := ir.database.
+		Preload("Blogs").
+		Preload("Videos").
+		Preload("Anchors").
+		Find(&ideas)
+
 	return ideas, res.Error
 }
 
