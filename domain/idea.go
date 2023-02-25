@@ -12,7 +12,7 @@ type Idea struct {
 	Content string  `json:"content"`
 	Videos  []Video `gorm:"many2many:ideas_videos;" json:"videos"`
 	Blogs   []Blog  `gorm:"many2many:blogs_ideas;" json:"blogs"`
-	Anchors []Idea  `gorm:"many2many:ideas_anchors;" json:"anchors"`
+	Anchors []*Idea `gorm:"many2many:ideas_anchors;" json:"anchors"` //should be anchors_ideas
 }
 
 /**

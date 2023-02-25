@@ -278,7 +278,7 @@ func TestCreateIdeas(t *testing.T) {
 	t.Run("withAnchorIdeas", func(t *testing.T) {
 		// arrange
 		ideas := seedIdeas(db, user)
-		ideaReqBody := []byte(fmt.Sprintf((`{"content": "Idea with video and blog resources",
+		ideaReqBody := []byte(fmt.Sprintf((`{"content": "New idea with two anchor ideas",
 			"anchors": [{"id": %d}, {"id": %d}]}`), ideas[0].ID, ideas[1].ID))
 
 		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
@@ -346,23 +346,24 @@ func TestDeleteIdeaByID(t *testing.T) {
 }
 
 func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
-	emptyIdea := domain.Idea{
+	emptyIdea := &domain.Idea{
 		UserID:  user.ID,
 		Content: "Some content that is suitable to a sample idea",
 	}
 
-	fullIdea := domain.Idea{
+	db.Create(emptyIdea)
+
+	fullIdea := &domain.Idea{
 		UserID:  user.ID,
 		Content: "Content for an idea anchored upon a blog",
 		Blogs:   []domain.Blog{{Url: "https://some-blog.com", Category: "science"}},
 		Videos:  []domain.Video{{Url: "https://some-youtube-video.com", YoutubeChannel: "cool-channel"}},
-		Anchors: []domain.Idea{emptyIdea},
+		Anchors: []*domain.Idea{emptyIdea},
 	}
 
-	db.Create(&emptyIdea)
 	db.Create(&fullIdea)
 
-	return []domain.Idea{emptyIdea, fullIdea}
+	return []domain.Idea{*emptyIdea, *fullIdea}
 }
 
 func fetchResources[M any](db *gorm.DB, resources []M) []M {
