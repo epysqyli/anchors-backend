@@ -32,6 +32,7 @@ type IdeaRepository interface {
 func (idea Idea) HasNoResources() bool {
 	if idea.Blogs == nil &&
 		idea.Videos == nil &&
+		idea.Books == nil &&
 		idea.Anchors == nil {
 		return true
 	}

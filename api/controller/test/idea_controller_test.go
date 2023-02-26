@@ -294,6 +294,56 @@ func TestCreateIdeas(t *testing.T) {
 		}
 	})
 
+	t.Run("withBookAndChapter", func(t *testing.T) {
+		bookResource := `{
+			"url": "https://openlibrary.org/works/OL20984004W",
+			"open_library_key": "OL20984004W",
+			"title": "The Bitcoin Standard",
+			"year": 2018,
+			"number_of_pages": 304,
+			"open_library_id": 10320866,
+			"language": "eng",
+			"authors": [
+				{"author_key": "OL7945937A", "full_name": "James Fouhey"},
+				{"author_key": "OL8027052A", "full_name": "Saifedean Ammous"}
+			],
+			"chapter": "2 - the greatest chapter of all time"
+		}`
+
+		ideaReqBody := []byte(fmt.Sprintf((`{"content": "Idea based on a book", "books": [%s]}`), bookResource))
+
+		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		ideaReq.Header.Add("Content-Type", "application/json")
+		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		ideaRec := httptest.NewRecorder()
+		gin.ServeHTTP(ideaRec, ideaReq)
+
+		if ideaRec.Code != http.StatusCreated {
+			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
+		}
+
+		ideaResp := &domain.Idea{}
+		json.NewDecoder(ideaRec.Body).Decode(ideaResp)
+
+		bookIdeaRel := &domain.BooksIdeas{
+			IdeaID: ideaResp.ID,
+			BookID: ideaResp.Books[0].ID,
+		}
+		db.Find(bookIdeaRel)
+
+		if bookIdeaRel.Chapter == "" {
+			t.Fatal("Chapter field from the book idea relation is empty")
+		}
+	})
+
+	// - make sure no duplicate books or authors are created
+	//   - create a second idea immediately after the first
+	//   - the second idea references the same book from the first
+
 	t.Cleanup(func() {
 		cleanupDatabase(db)
 		cleanupUser(db, sampleUser().Name)
@@ -370,6 +420,10 @@ func cleanupDatabase(db *gorm.DB) {
 	db.Exec("delete from anchors_ideas")
 	db.Exec("delete from ideas_videos")
 	db.Exec("delete from blogs_ideas")
+	db.Exec("delete from books_ideas")
+	db.Exec("delete from authors_books")
+	db.Exec("delete from authors")
+	db.Exec("delete from books")
 	db.Exec("delete from videos")
 	db.Exec("delete from blogs")
 	db.Exec("delete from ideas")
