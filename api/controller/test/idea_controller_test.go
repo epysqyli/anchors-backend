@@ -300,12 +300,12 @@ func TestCreateIdeas(t *testing.T) {
 	})
 }
 
-func TestDeleteIdeaByID(t *testing.T) {
+func TestDeleteIdea(t *testing.T) {
 	gin, db := setup()
 	authTokens, user := signup(gin, db, sampleUser())
 	ideas := seedIdeas(db, user)
 
-	endpoint := fmt.Sprintf("/v1/ideas/%d", ideas[0].ID)
+	endpoint := fmt.Sprintf("/v1/ideas/%d", ideas[1].ID)
 	ideaReq, err := http.NewRequest(http.MethodDelete, endpoint, bytes.NewReader([]byte{}))
 	if err != nil {
 		t.Fatalf("could not create request: %v\n", err)
@@ -321,9 +321,12 @@ func TestDeleteIdeaByID(t *testing.T) {
 		t.Fatalf("Unexpected response status code: %d\n", ideaRec.Code)
 	}
 
-	remainingIdeas := fetchResources(db, []domain.Idea{})
-	if len(ideas) == len(remainingIdeas) {
-		t.Fatalf("Expected ideas slice length: %d, obtained: %d", len(ideas)-1, len(remainingIdeas))
+	// test fetch idea -> should be empty
+	var idea domain.Idea
+	db.First(&idea, ideas[1].ID)
+
+	if idea.ID != 0 {
+		t.Fatalf("Idea with ID: %d should not exist", ideas[1].ID)
 	}
 
 	t.Cleanup(func() {
