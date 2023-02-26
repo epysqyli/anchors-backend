@@ -14,12 +14,9 @@ import (
 
 func TestFetchIdeas(t *testing.T) {
 	gin, db := setup()
-	user := sampleUser()
-	signup(gin, user)
-	user, _ = fetchUser(db, user.Name)
+	_, user := signup(gin, db, sampleUser())
 	ideas := seedIdeas(db, user)
 
-	// check for associated resources
 	t.Run("all", func(t *testing.T) {
 		ideaReq, err := http.NewRequest(http.MethodGet, "/v1/ideas", bytes.NewReader([]byte{}))
 		if err != nil {
@@ -106,8 +103,7 @@ func TestFetchIdeas(t *testing.T) {
 
 func TestCreateIdeas(t *testing.T) {
 	gin, db := setup()
-	authTokens := signup(gin, sampleUser())
-	user, _ := fetchUser(db, sampleUser().Name)
+	authTokens, user := signup(gin, db, sampleUser())
 
 	t.Run("withNoResources", func(t *testing.T) {
 		// arrange
@@ -306,8 +302,7 @@ func TestCreateIdeas(t *testing.T) {
 
 func TestDeleteIdeaByID(t *testing.T) {
 	gin, db := setup()
-	authTokens := signup(gin, sampleUser())
-	user, _ := fetchUser(db, sampleUser().Name)
+	authTokens, user := signup(gin, db, sampleUser())
 	ideas := seedIdeas(db, user)
 
 	endpoint := fmt.Sprintf("/v1/ideas/%d", ideas[0].ID)
@@ -353,7 +348,7 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 		Anchors: []*domain.Idea{emptyIdea},
 	}
 
-	db.Create(&fullIdea)
+	db.Create(fullIdea)
 
 	return []domain.Idea{*emptyIdea, *fullIdea}
 }

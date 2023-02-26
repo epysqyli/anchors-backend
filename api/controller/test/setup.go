@@ -35,7 +35,7 @@ func sampleUser() domain.User {
 	}
 }
 
-func signup(gin *gin.Engine, user domain.User) domain.SignupResponse {
+func signup(gin *gin.Engine, db *gorm.DB, user domain.User) (domain.SignupResponse, domain.User) {
 	signupString := fmt.Sprintf(`{"name": "%s", "email": "%s", "password": "%s"}`, user.Name, user.Email, user.Password)
 	signupReqBody := []byte(signupString)
 
@@ -48,7 +48,9 @@ func signup(gin *gin.Engine, user domain.User) domain.SignupResponse {
 	signupResp := domain.SignupResponse{}
 	json.NewDecoder(signupRec.Body).Decode(&signupResp)
 
-	return signupResp
+	db.Model(&domain.User{}).Where("name = ?", user.Name).First(&user)
+
+	return signupResp, user
 }
 
 func login(gin *gin.Engine, user domain.User) domain.LoginResponse {
