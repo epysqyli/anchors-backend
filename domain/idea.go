@@ -21,7 +21,7 @@ type Idea struct {
  */
 type IdeaRepository interface {
 	Create(c context.Context, idea *Idea) error
-	FetchByUserID(c context.Context, userId string) ([]Idea, error)
+	FetchByUserID(c context.Context, userID string) ([]Idea, error)
 	FetchByID(c context.Context, id string) (Idea, error)
 	FetchAll(c context.Context) ([]Idea, error)
 	DeleteByID(c context.Context, id string) error
