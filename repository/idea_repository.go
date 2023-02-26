@@ -82,4 +82,6 @@ func (ir *IdeaRepository) assignRelationFields(idea *domain.Idea) {
 			Model(domain.IdeasVideos{IdeaID: idea.ID, VideoID: video.ID}).
 			Update("timestamp", video.Timestamp)
 	}
+
+	// handle books case -> assign 'chapter'
 }

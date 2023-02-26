@@ -6,12 +6,14 @@ import (
 	"gorm.io/gorm"
 )
 
+// which associations should be array of pointers?
 type Idea struct {
 	gorm.Model
 	UserID  uint    `json:"user_id"`
 	Content string  `json:"content"`
 	Videos  []Video `gorm:"many2many:ideas_videos;" json:"videos"`
 	Blogs   []Blog  `gorm:"many2many:blogs_ideas;" json:"blogs"`
+	Books   []Book  `gorm:"many2many:books_ideas" json:"books"`
 	Anchors []*Idea `gorm:"many2many:anchors_ideas;" json:"anchors"`
 }
 
