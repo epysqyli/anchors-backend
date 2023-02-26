@@ -369,7 +369,7 @@ func fetchResourceByUrl[M any](db *gorm.DB, resource *M, url string) *M {
 }
 
 func cleanupDatabase(db *gorm.DB) {
-	db.Exec("delete from ideas_anchors")
+	db.Exec("delete from anchors_ideas")
 	db.Exec("delete from ideas_videos")
 	db.Exec("delete from blogs_ideas")
 	db.Exec("delete from videos")
