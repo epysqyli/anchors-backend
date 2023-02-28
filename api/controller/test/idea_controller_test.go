@@ -333,16 +333,53 @@ func TestCreateIdeas(t *testing.T) {
 			IdeaID: ideaResp.ID,
 			BookID: ideaResp.Books[0].ID,
 		}
-		db.Find(bookIdeaRel)
+		db.Find(bookIdeaRel) // check if this query works as expected, maybe WHERE is needed
 
 		if bookIdeaRel.Chapter == "" {
 			t.Fatal("Chapter field from the book idea relation is empty")
 		}
 	})
 
-	// - make sure no duplicate books or authors are created
-	//   - create a second idea immediately after the first
-	//   - the second idea references the same book from the first
+	t.Run("twoIdeasSameBook", func(t *testing.T) {
+		bookResource := `{
+			"url": "https://openlibrary.org/works/OL00000000A",
+			"open_library_key": "OL00000000A",
+			"title": "Basic book title",
+			"year": 2000,
+			"number_of_pages": 100,
+			"open_library_id": 10101010,
+			"language": "eng",
+			"authors": [
+				{"open_library_key": "OL8051252D", "full_name": "Basic Author"}
+			]
+		}`
+
+		firstIdea := fmt.Sprintf((`{"content": "Some idea - book one", "books": [%s]}`), bookResource)
+		firstIdeaReq, _ := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader([]byte(firstIdea)))
+		firstIdeaReq.Header.Add("Content-Type", "application/json")
+		firstIdeaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		firstIdeaRec := httptest.NewRecorder()
+		gin.ServeHTTP(firstIdeaRec, firstIdeaReq)
+
+		ideaResp := &domain.Idea{}
+		json.NewDecoder(firstIdeaRec.Body).Decode(ideaResp)
+		bookID := ideaResp.Books[0].ID
+
+		secondIdea := fmt.Sprintf((`{"content": "Another idea - book one", "books": [%s]}`), bookResource)
+		secondIdeaReq, _ := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader([]byte(secondIdea)))
+		secondIdeaReq.Header.Add("Content-Type", "application/json")
+		secondIdeaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		secondIdeaRec := httptest.NewRecorder()
+		gin.ServeHTTP(secondIdeaRec, secondIdeaReq)
+
+		// check that many to many has two entries for the book
+		bookIdeasRels := []domain.BooksIdeas{}
+		db.Where([]domain.BooksIdeas{{BookID: bookID}}).Find(&bookIdeasRels)
+
+		if len(bookIdeasRels) != 2 {
+			t.Fatalf("books_ideas entries for bookID %d\nexpected: %d, got: %d", bookID, 2, len(bookIdeasRels))
+		}
+	})
 
 	t.Cleanup(func() {
 		cleanupDatabase(db)

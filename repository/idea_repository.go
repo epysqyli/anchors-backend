@@ -18,6 +18,10 @@ func NewIdeaRepository(db *gorm.DB) domain.IdeaRepository {
 }
 
 func (ir *IdeaRepository) Create(c context.Context, idea *domain.Idea) error {
+	// how to approach other resource types other than ideas from users?
+	// do they need IDs enrichment as well?
+	ir.enrichWithExistingIDs(idea)
+
 	res := ir.database.Create(idea)
 	if res.Error != nil {
 		return res.Error
@@ -87,5 +91,38 @@ func (ir *IdeaRepository) assignRelationFields(idea *domain.Idea) {
 		ir.database.
 			Model(domain.BooksIdeas{IdeaID: idea.ID, BookID: book.ID}).
 			Update("chapter", book.Chapter)
+	}
+}
+
+// assign IDs to existing books and author
+func (ir *IdeaRepository) enrichWithExistingIDs(idea *domain.Idea) {
+	if idea.Books == nil {
+		return
+	}
+
+	for ib, book := range idea.Books {
+		if book.ID == 0 {
+			b := domain.Book{}
+			ir.database.Where(&domain.Book{OpenLibraryKey: book.OpenLibraryKey}).First(&b)
+
+			if b.ID != 0 {
+				bookPtr := &idea.Books[ib]
+				bookPtr.ID = b.ID
+			}
+
+			if book.Authors == nil {
+				continue
+			}
+
+			for ia, author := range book.Authors {
+				a := domain.Author{}
+				ir.database.Where(&domain.Author{OpenLibraryKey: author.OpenLibraryKey}).First(&a)
+
+				if a.ID != 0 {
+					authorPtr := &book.Authors[ia]
+					authorPtr.ID = a.ID
+				}
+			}
+		}
 	}
 }
