@@ -304,8 +304,8 @@ func TestCreateIdeas(t *testing.T) {
 			"open_library_id": 10320866,
 			"language": "eng",
 			"authors": [
-				{"author_key": "OL7945937A", "full_name": "James Fouhey"},
-				{"author_key": "OL8027052A", "full_name": "Saifedean Ammous"}
+				{"open_library_key": "OL7945937A", "full_name": "James Fouhey"},
+				{"open_library_key": "OL8027052A", "full_name": "Saifedean Ammous"}
 			],
 			"chapter": "2 - the greatest chapter of all time"
 		}`
