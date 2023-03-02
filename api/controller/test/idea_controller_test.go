@@ -463,7 +463,7 @@ func fetchResources[M any](db *gorm.DB, resources []M) []M {
 }
 
 func fetchResourceByUrl[M any](db *gorm.DB, resource *M, url string) *M {
-	db.Model(resource).Where("url = ?", url).First(&resource)
+	db.Model(resource).Where("url = ?", url).First(resource)
 	return resource
 }
 
