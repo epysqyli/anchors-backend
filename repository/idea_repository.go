@@ -18,9 +18,7 @@ func NewIdeaRepository(db *gorm.DB) domain.IdeaRepository {
 }
 
 func (ir *IdeaRepository) Create(c context.Context, idea *domain.Idea) error {
-	// how to approach other resource types other than ideas from users?
-	// do they need IDs enrichment as well?
-	ir.enrichWithExistingIDs(idea)
+	ir.assignExistingIDs(idea)
 
 	res := ir.database.Create(idea)
 	if res.Error != nil {
@@ -38,6 +36,7 @@ func (ir *IdeaRepository) FetchAll(c context.Context) ([]domain.Idea, error) {
 		Preload("Blogs").
 		Preload("Videos").
 		Preload("Anchors").
+		Preload("Books.Authors").
 		Find(&ideas)
 
 	return ideas, res.Error
@@ -49,6 +48,7 @@ func (ir *IdeaRepository) FetchByUserID(c context.Context, userID string) ([]dom
 		Preload("Blogs").
 		Preload("Videos").
 		Preload("Anchors").
+		Preload("Books.Authors").
 		Find(&ideas, "user_id = ?", userID)
 
 	return ideas, res.Error
@@ -65,6 +65,7 @@ func (ir *IdeaRepository) FetchByID(c context.Context, id string) (domain.Idea, 
 		Preload("Blogs").
 		Preload("Videos").
 		Preload("Anchors").
+		Preload("Books.Authors").
 		First(&idea, id)
 
 	return idea, res.Error
@@ -94,8 +95,13 @@ func (ir *IdeaRepository) assignRelationFields(idea *domain.Idea) {
 	}
 }
 
-// assign IDs to existing books and author
-func (ir *IdeaRepository) enrichWithExistingIDs(idea *domain.Idea) {
+/**
+ * assign IDs to existing resources
+ * needed for all those resource provided by external APIs:
+ * books + authors, movies, songs
+ * these resources are not unique based on their URL
+ */
+func (ir *IdeaRepository) assignExistingIDs(idea *domain.Idea) {
 	if idea.Books == nil {
 		return
 	}

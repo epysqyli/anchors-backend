@@ -430,12 +430,26 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 
 	db.Create(emptyIdea)
 
+	book := domain.Book{
+		Url:            "https://openlibrary.org/works/OL02600010B",
+		OpenLibraryKey: "OL02600010B",
+		Title:          "Book from seeds",
+		Year:           1999,
+		NumberOfPages:  100,
+		OpenLibraryID:  12341234,
+		Language:       "eng",
+		Authors: []domain.Author{
+			{OpenLibraryKey: "OL8054255E", FullName: "Some Writer"},
+		},
+	}
+
 	fullIdea := &domain.Idea{
 		UserID:  user.ID,
 		Content: "Content for an idea anchored upon a blog",
 		Blogs:   []domain.Blog{{Url: "https://some-blog.com", Category: "science"}},
 		Videos:  []domain.Video{{Url: "https://some-youtube-video.com", YoutubeChannel: "cool-channel"}},
 		Anchors: []*domain.Idea{emptyIdea},
+		Books:   []domain.Book{book},
 	}
 
 	db.Create(fullIdea)
@@ -477,5 +491,13 @@ func checkIdeaAssociations(t *testing.T, idea *domain.Idea) {
 
 	if len(idea.Anchors) == 0 {
 		t.Fatalf("Anchor ideas missing, expected: %d, obtained: %d", 1, len(idea.Anchors))
+	}
+
+	if len(idea.Books) == 0 {
+		t.Fatalf("Books missing, expected: %d, obtained: %d", 1, len(idea.Books))
+	}
+
+	if len(idea.Books[0].Authors) == 0 {
+		t.Fatalf("Author missing on books, expected: %d, obtained: %d", 1, len(idea.Books[0].Authors))
 	}
 }
