@@ -295,22 +295,34 @@ func TestCreateIdeas(t *testing.T) {
 	})
 
 	t.Run("withBookAndChapter", func(t *testing.T) {
-		bookResource := `{
-			"url": "https://openlibrary.org/works/OL20984004W",
-			"open_library_key": "OL20984004W",
-			"title": "The Bitcoin Standard",
-			"year": 2018,
-			"number_of_pages": 304,
-			"open_library_id": 10320866,
-			"language": "eng",
-			"authors": [
-				{"open_library_key": "OL7945937A", "full_name": "James Fouhey"},
-				{"open_library_key": "OL8027052A", "full_name": "Saifedean Ammous"}
-			],
-			"chapter": "2 - the greatest chapter of all time"
-		}`
+		bookResources := `[
+			{
+				"url": "https://openlibrary.org/works/OL20984004W",
+				"open_library_key": "OL20984004W",
+				"title": "The Bitcoin Standard",
+				"year": 2018,
+				"number_of_pages": 304,
+				"open_library_id": 10320866,
+				"language": "eng",
+				"authors": [
+					{"open_library_key": "OL7945937A", "full_name": "James Fouhey"},
+					{"open_library_key": "OL8027052A", "full_name": "Saifedean Ammous"}
+				],
+				"chapter": "2 - the greatest chapter of all time"
+			},
+			{
+				"url": "https://openlibrary.org/works/OL20984100F",
+				"open_library_key": "OL20984100F",
+				"title": "The Whatever Book Title",
+				"year": 2000,
+				"number_of_pages": 200,
+				"open_library_id": 10320100,
+				"language": "eng",
+				"authors": [{"open_library_key": "OL1005931M", "full_name": "Best Writer"}]
+			}
+		]`
 
-		ideaReqBody := []byte(fmt.Sprintf((`{"content": "Idea based on a book", "books": [%s]}`), bookResource))
+		ideaReqBody := []byte(fmt.Sprintf((`{"content": "Idea based on a book", "books": %s}`), bookResources))
 
 		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
 		if err != nil {
@@ -329,14 +341,24 @@ func TestCreateIdeas(t *testing.T) {
 		ideaResp := &domain.Idea{}
 		json.NewDecoder(ideaRec.Body).Decode(ideaResp)
 
-		bookIdeaRel := &domain.BooksIdeas{
+		firstBookIdeaRel := &domain.BooksIdeas{
 			IdeaID: ideaResp.ID,
 			BookID: ideaResp.Books[0].ID,
 		}
-		db.Find(bookIdeaRel) // check if this query works as expected, maybe WHERE is needed
+		db.Find(firstBookIdeaRel)
 
-		if bookIdeaRel.Chapter == "" {
+		if firstBookIdeaRel.Chapter == "" {
 			t.Fatal("Chapter field from the book idea relation is empty")
+		}
+
+		secondBookIdeaRel := &domain.BooksIdeas{
+			IdeaID: ideaResp.ID,
+			BookID: ideaResp.Books[1].ID,
+		}
+		db.Find(secondBookIdeaRel)
+
+		if secondBookIdeaRel.Chapter != "" {
+			t.Fatal("Chapter field from the book idea relation should be empty")
 		}
 	})
 
