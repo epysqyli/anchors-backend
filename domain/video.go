@@ -5,7 +5,7 @@ import "gorm.io/gorm"
 type Video struct {
 	gorm.Model
 	Url            string `json:"url" gorm:"not null;unique"`
-	YoutubeChannel string `json:"youtube_channel"`
+	YoutubeChannel string `json:"youtube_channel"` // take it from the url param
 	Ideas          []Idea `gorm:"many2many:ideas_videos;"`
 	Timestamp      int16  `json:"timestamp" gorm:"-"`
 }

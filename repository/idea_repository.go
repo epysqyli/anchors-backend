@@ -83,15 +83,19 @@ func (ir *IdeaRepository) DeleteByID(c context.Context, id string) error {
  */
 func (ir *IdeaRepository) assignRelationFields(idea *domain.Idea) {
 	for _, video := range idea.Videos {
-		ir.database.
-			Model(domain.IdeasVideos{IdeaID: idea.ID, VideoID: video.ID}).
-			Update("timestamp", video.Timestamp)
+		if video.Timestamp != 0 {
+			ir.database.
+				Model(domain.IdeasVideos{IdeaID: idea.ID, VideoID: video.ID}).
+				Update("timestamp", video.Timestamp)
+		}
 	}
 
 	for _, book := range idea.Books {
-		ir.database.
-			Model(domain.BooksIdeas{IdeaID: idea.ID, BookID: book.ID}).
-			Update("chapter", book.Chapter)
+		if book.Chapter != "" {
+			ir.database.
+				Model(domain.BooksIdeas{IdeaID: idea.ID, BookID: book.ID}).
+				Update("chapter", book.Chapter)
+		}
 	}
 }
 
