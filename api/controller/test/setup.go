@@ -14,7 +14,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// TestMain for controller test package?
 func setup() (*gin.Engine, *gorm.DB) {
 	app := bootstrap.App("../../../.env", "test")
 	psqlDB := app.Postgres

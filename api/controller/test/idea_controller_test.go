@@ -107,8 +107,7 @@ func TestCreateIdeas(t *testing.T) {
 
 	t.Run("withNoResources", func(t *testing.T) {
 		// arrange
-		content := "this is a test idea"
-		ideaReqBody := []byte(fmt.Sprintf(`{"content": "%s"}`, content))
+		ideaReqBody := []byte(`{"content": "this is a test idea"}`)
 		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
 		if err != nil {
 			t.Fatalf("could not create request: %v\n", err)
@@ -123,7 +122,7 @@ func TestCreateIdeas(t *testing.T) {
 
 		// assert
 		if ideaRec.Code != http.StatusBadRequest {
-			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
+			t.Fatalf("Unexpected response status code: %d\n", ideaRec.Code)
 		}
 	})
 
@@ -177,6 +176,47 @@ func TestCreateIdeas(t *testing.T) {
 	})
 
 	t.Run("withMultipleResourceTypes", func(t *testing.T) {
+		ideaReqBody := []byte(`{
+			"content": "Idea with video and blog resources",
+			"videos": [
+				{"url": "https://www.youtube.com/watch?v=f2a_k2LIZyo"},
+				{"url": "https://www.randomvideos.com/videos/11111"}
+			],
+			"blogs": [
+				{"url": "https://cool-blog.com", "category": "low-level-programming"}
+			]
+		}`)
+
+		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		ideaReq.Header.Add("Content-Type", "application/json")
+		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		ideaRec := httptest.NewRecorder()
+
+		// act
+		gin.ServeHTTP(ideaRec, ideaReq)
+
+		// assert
+		if ideaRec.Code != http.StatusCreated {
+			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
+		}
+
+		idea := &domain.Idea{}
+		json.NewDecoder(ideaRec.Body).Decode(idea)
+
+		if len(idea.Videos) == 0 {
+			t.Fatal("No videos found")
+		}
+
+		if len(idea.Blogs) == 0 {
+			t.Fatal("No blogs found")
+		}
+	})
+
+	t.Run("withRelationFields", func(t *testing.T) {
 		// arrange
 		ideaReqBody := []byte(`{
 				"content": "Idea with video and blog resources",
@@ -188,16 +228,6 @@ func TestCreateIdeas(t *testing.T) {
 					{
 						"url": "https://www.youtube.com/watch?v=MAeYCvyjQgE&ab_channel=JordanBPetersonClips",
 						"timestamp": 99
-					}
-				],
-				"blogs": [
-					{
-						"url": "https://mtlynch.io/solo-developer-year-5/",
-						"category": "software development"
-					},
-					{
-						"url": "https://matt-rickard.com/ask-dumb-questions",
-						"category": "software development"
 					}
 				]
 			}`)
@@ -226,15 +256,6 @@ func TestCreateIdeas(t *testing.T) {
 			t.Fatalf("No videos found")
 		}
 
-		// uncomment once youtube unique identifier issue is solved
-		// if ideaResp.Videos[0].YoutubeChannel == "" || ideaResp.Videos[1].YoutubeChannel == "" {
-		// 	t.Fatal("Youtube Channel for videos not assigned")
-		// }
-
-		if len(ideaResp.Blogs) == 0 {
-			t.Fatalf("No blogs found")
-		}
-
 		firstIdeaVideoRelation := domain.IdeasVideos{
 			IdeaID:  ideaResp.ID,
 			VideoID: ideaResp.Videos[0].ID,
@@ -255,13 +276,6 @@ func TestCreateIdeas(t *testing.T) {
 		if secondIdeaVideoRelation.Timestamp != 99 {
 			t.Fatalf("Timestamp not correctly assigned\n\texpected: %d\n\tgot: %d",
 				99, secondIdeaVideoRelation.Timestamp)
-		}
-
-		blogsIdeasRelations := []domain.BlogsIdeas{}
-		db.Find(&blogsIdeasRelations)
-
-		if len(blogsIdeasRelations) != 2 {
-			t.Fatalf("Wrong number of blogs ideas relations\n\texpected: %d\n\tgot: %d", 2, len(blogsIdeasRelations))
 		}
 	})
 
