@@ -119,6 +119,7 @@ func (ir *IdeaRepository) assignExistingIDs(idea *domain.Idea) {
 }
 
 // implement logic to assign unique identifier for each resource type
+// example: video identifier, youtube_channel if present and more
 func (ir *IdeaRepository) assignResourceFields(idea *domain.Idea) {
 	for i, video := range idea.Videos {
 		if video.Identifier == "" {
