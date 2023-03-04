@@ -127,7 +127,6 @@ func TestCreateIdeas(t *testing.T) {
 		}
 	})
 
-	// https://www.youtube.com/watch?v=p8u_k2LIZyo
 	t.Run("withVideos", func(t *testing.T) {
 		ideaReqBody := []byte(`{
 			"content": "Idea with video and blog resources",
@@ -266,18 +265,22 @@ func TestCreateIdeas(t *testing.T) {
 		}
 	})
 
-	t.Run("withExistingResource", func(t *testing.T) {
+	t.Run("withExistingVideo", func(t *testing.T) {
 		// arrange
-		db.Create(&domain.Video{Url: "https://some-random-url.com", YoutubeChannel: "some-channel"})
-		video := fetchResourceByUrl(db, &domain.Video{}, "https://some-random-url.com")
-		videoArray := fmt.Sprintf(`"videos": [{"id": %d, "url": "%s", "youtube_channel": "%s"}]`,
-			video.ID, video.Url, video.YoutubeChannel)
+		db.Create(&domain.Video{
+			Url:        "https://some-random-url.com",
+			Identifier: "https://some-random-url.com",
+		})
 
-		ideaReqBody := []byte(fmt.Sprintf(
-			`{"content": "Some random idea that I'd like to publish", %s}`, videoArray))
+		ideaReqBody := []byte(`{
+			"content": "Some random idea that I'd like to publish",
+			"videos": [{"url": "https://some-random-url.com", "identifier": "https://some-random-url.com"}]
+		}`)
 
-		anotherIdeaReqBody := []byte(fmt.Sprintf(
-			`{"content": "Some random idea that I'd like to publish", %s}`, videoArray))
+		anotherIdeaReqBody := []byte(`{
+			"content": "Yet another idea I'd like to publish",
+			"videos": [{"url": "https://some-random-url.com", "identifier": "https://some-random-url.com"}]
+		}`)
 
 		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
 		anotherIdeaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(anotherIdeaReqBody))
@@ -302,11 +305,11 @@ func TestCreateIdeas(t *testing.T) {
 
 		// assert
 		if ideaRec.Code != http.StatusCreated {
-			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
+			t.Fatalf("Response returned with an unexpected status code: +%v\n", ideaRec.Body)
 		}
 
 		if anotherIdeaRec.Code != http.StatusCreated {
-			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
+			t.Fatalf("Response returned with an unexpected status code: %d\n", anotherIdeaRec.Code)
 		}
 
 		currentVideosCount := len(fetchResources(db, []domain.Video{}))

@@ -78,15 +78,17 @@ func (ir *IdeaRepository) DeleteByID(c context.Context, id string) error {
 	return tx.Error
 }
 
-/**
- * assign IDs to existing resources
- * needed for all those resource provided by external APIs:
- * books + authors, movies, songs
- * these resources are not unique based on their URL
- */
 func (ir *IdeaRepository) assignExistingIDs(idea *domain.Idea) {
-	if idea.Books == nil {
-		return
+	for iv, video := range idea.Videos {
+		if video.ID == 0 {
+			v := domain.Video{}
+			ir.database.Where(&domain.Video{Identifier: video.RetrieveIdentifier()}).First(&v)
+
+			if v.ID != 0 {
+				videoPtr := &idea.Videos[iv]
+				videoPtr.ID = v.ID
+			}
+		}
 	}
 
 	for ib, book := range idea.Books {
@@ -116,16 +118,13 @@ func (ir *IdeaRepository) assignExistingIDs(idea *domain.Idea) {
 	}
 }
 
-/**
- * implement logic to assign unique identifier for each resource type
- * example: youtube video has unique ID from youtube, other videos should use URLs
- * this should be extended to other resource types
- * it maybe can be refactored into model methods if access to DB is postponed
- */
+// implement logic to assign unique identifier for each resource type
 func (ir *IdeaRepository) assignResourceFields(idea *domain.Idea) {
-	for i := range idea.Videos {
-		videaPtr := &idea.Videos[i]
-		videaPtr.AssignIdentifier()
+	for i, video := range idea.Videos {
+		if video.Identifier == "" {
+			videoPtr := &idea.Videos[i]
+			videoPtr.AssignIdentifier()
+		}
 	}
 }
 
