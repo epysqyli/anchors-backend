@@ -127,6 +127,56 @@ func TestCreateIdeas(t *testing.T) {
 		}
 	})
 
+	// https://www.youtube.com/watch?v=p8u_k2LIZyo
+	t.Run("withVideos", func(t *testing.T) {
+		ideaReqBody := []byte(`{
+			"content": "Idea with video and blog resources",
+			"videos": [
+				{"url": "https://www.youtube.com/watch?v=p8u_k2LIZyo"},
+				{"url": "https://www.youtube.com/watch?v=tKbV6BpH-C8&t=167s&ab_channel=CodeAesthetic"},
+				{"url": "https://www.randomvideos.com/videos/12444"},
+				{"url": "https://youtu.be/7_cXxEbR_pA"}
+			]
+		}`)
+
+		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		ideaReq.Header.Add("Content-Type", "application/json")
+		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		ideaRec := httptest.NewRecorder()
+
+		// act
+		gin.ServeHTTP(ideaRec, ideaReq)
+
+		// assert
+		if ideaRec.Code != http.StatusCreated {
+			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
+		}
+
+		idea := &domain.Idea{}
+		json.NewDecoder(ideaRec.Body).Decode(idea)
+
+		if idea.Videos[0].Identifier != "p8u_k2LIZyo" {
+			t.Fatalf("Wrong identifier\nExpected: %s\nReturned: %s", "p8u_k2LIZyo", idea.Videos[0].Identifier)
+		}
+
+		if idea.Videos[1].Identifier != "tKbV6BpH-C8" {
+			t.Fatalf("Wrong identifier\nExpected: %s\nReturned: %s", "tKbV6BpH-C8", idea.Videos[1].Identifier)
+		}
+
+		nonYtIdentifier := "https://www.randomvideos.com/videos/12444"
+		if idea.Videos[2].Identifier != nonYtIdentifier {
+			t.Fatalf("Wrong identifier\nExpected: %s\nReturned: %s", nonYtIdentifier, idea.Videos[2].Identifier)
+		}
+
+		if idea.Videos[3].Identifier != "7_cXxEbR_pA" {
+			t.Fatalf("Wrong identifier\nExpected: %s\nReturned: %s", "7_cXxEbR_pA", idea.Videos[3].Identifier)
+		}
+	})
+
 	t.Run("withMultipleResourceTypes", func(t *testing.T) {
 		// arrange
 		ideaReqBody := []byte(`{
@@ -134,12 +184,10 @@ func TestCreateIdeas(t *testing.T) {
 				"videos": [
 					{
 						"url": "https://www.youtube.com/watch?v=8cX1aptP5Io&list=FL6zRqV5BoLaPshnUjI_oLPg&ab_channel=TheBitcoinLayer",
-						"youtube_channel": "Some bitcoin channel",
 						"timestamp": 124
 					},
 					{
 						"url": "https://www.youtube.com/watch?v=MAeYCvyjQgE&ab_channel=JordanBPetersonClips",
-						"youtube_channel": "Some bitcoin channel",
 						"timestamp": 99
 					}
 				],
@@ -178,6 +226,11 @@ func TestCreateIdeas(t *testing.T) {
 		if len(ideaResp.Videos) == 0 {
 			t.Fatalf("No videos found")
 		}
+
+		// uncomment once youtube unique identifier issue is solved
+		// if ideaResp.Videos[0].YoutubeChannel == "" || ideaResp.Videos[1].YoutubeChannel == "" {
+		// 	t.Fatal("Youtube Channel for videos not assigned")
+		// }
 
 		if len(ideaResp.Blogs) == 0 {
 			t.Fatalf("No blogs found")

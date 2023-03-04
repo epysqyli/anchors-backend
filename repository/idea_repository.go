@@ -19,6 +19,7 @@ func NewIdeaRepository(db *gorm.DB) domain.IdeaRepository {
 
 func (ir *IdeaRepository) Create(c context.Context, idea *domain.Idea) error {
 	ir.assignExistingIDs(idea)
+	ir.assignResourceFields(idea)
 
 	res := ir.database.Create(idea)
 	if res.Error != nil {
@@ -78,28 +79,6 @@ func (ir *IdeaRepository) DeleteByID(c context.Context, id string) error {
 }
 
 /**
- *	can this be done with an afterCreate DB hook?
- *  can db calls be limited to a single call?
- */
-func (ir *IdeaRepository) assignRelationFields(idea *domain.Idea) {
-	for _, video := range idea.Videos {
-		if video.Timestamp != 0 {
-			ir.database.
-				Model(domain.IdeasVideos{IdeaID: idea.ID, VideoID: video.ID}).
-				Update("timestamp", video.Timestamp)
-		}
-	}
-
-	for _, book := range idea.Books {
-		if book.Chapter != "" {
-			ir.database.
-				Model(domain.BooksIdeas{IdeaID: idea.ID, BookID: book.ID}).
-				Update("chapter", book.Chapter)
-		}
-	}
-}
-
-/**
  * assign IDs to existing resources
  * needed for all those resource provided by external APIs:
  * books + authors, movies, songs
@@ -133,6 +112,41 @@ func (ir *IdeaRepository) assignExistingIDs(idea *domain.Idea) {
 					authorPtr.ID = a.ID
 				}
 			}
+		}
+	}
+}
+
+/**
+ * implement logic to assign unique identifier for each resource type
+ * example: youtube video has unique ID from youtube, other videos should use URLs
+ * this should be extended to other resource types
+ * it maybe can be refactored into model methods if access to DB is postponed
+ */
+func (ir *IdeaRepository) assignResourceFields(idea *domain.Idea) {
+	for i := range idea.Videos {
+		videaPtr := &idea.Videos[i]
+		videaPtr.AssignIdentifier()
+	}
+}
+
+/**
+ *	can this be done with an afterCreate DB hook?
+ *  can db calls be limited to a single call?
+ */
+func (ir *IdeaRepository) assignRelationFields(idea *domain.Idea) {
+	for _, video := range idea.Videos {
+		if video.Timestamp != 0 {
+			ir.database.
+				Model(domain.IdeasVideos{IdeaID: idea.ID, VideoID: video.ID}).
+				Update("timestamp", video.Timestamp)
+		}
+	}
+
+	for _, book := range idea.Books {
+		if book.Chapter != "" {
+			ir.database.
+				Model(domain.BooksIdeas{IdeaID: idea.ID, BookID: book.ID}).
+				Update("chapter", book.Chapter)
 		}
 	}
 }
