@@ -17,7 +17,7 @@ func TestFetchIdeas(t *testing.T) {
 	_, user := signup(gin, db, sampleUser())
 	ideas := seedIdeas(db, user)
 
-	t.Run("all", func(t *testing.T) {
+	t.Run("All", func(t *testing.T) {
 		ideaReq, err := http.NewRequest(http.MethodGet, "/v1/ideas", bytes.NewReader([]byte{}))
 		if err != nil {
 			t.Fatalf("could not create request: %v\n", err)
@@ -27,23 +27,18 @@ func TestFetchIdeas(t *testing.T) {
 		ideaRec := httptest.NewRecorder()
 
 		gin.ServeHTTP(ideaRec, ideaReq)
-
-		if ideaRec.Code != http.StatusOK {
-			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
-		}
+		assertEqual(ideaRec.Code, http.StatusOK, t, "Idea should have been fetched")
 
 		ideasResp := []domain.Idea{}
 		json.NewDecoder(ideaRec.Body).Decode(&ideasResp)
 
 		ideas := fetchResources(db, []domain.Idea{})
-		if len(ideasResp) != len(ideas) {
-			t.Fatalf("Expected ideas slice length: %d, obtained: %d", len(ideasResp), len(ideas))
-		}
+		assertEqual(len(ideas), len(ideasResp), t, "Wrong number of ideas fetched")
 
 		checkIdeaAssociations(t, &ideasResp[1])
 	})
 
-	t.Run("byUserID", func(t *testing.T) {
+	t.Run("UserID", func(t *testing.T) {
 		endpoint := fmt.Sprintf("/v1/users/%d/ideas", user.ID)
 		ideaReq, err := http.NewRequest(http.MethodGet, endpoint, bytes.NewReader([]byte{}))
 		if err != nil {
@@ -54,22 +49,16 @@ func TestFetchIdeas(t *testing.T) {
 		ideaRec := httptest.NewRecorder()
 
 		gin.ServeHTTP(ideaRec, ideaReq)
-
-		if ideaRec.Code != http.StatusOK {
-			t.Fatalf("Unexpected response status code: %d\n", ideaRec.Code)
-		}
+		assertEqual(ideaRec.Code, http.StatusOK, t, "Idea should have been fetched")
 
 		ideaResp := []domain.Idea{}
 		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
-
-		if len(ideaResp) != len(ideas) {
-			t.Fatalf("Unexpected response body length: %d\n", len(ideaResp))
-		}
+		assertEqual(len(ideas), len(ideaResp), t, "Wrong number of ideas fetched")
 
 		checkIdeaAssociations(t, &ideaResp[1])
 	})
 
-	t.Run("byID", func(t *testing.T) {
+	t.Run("ID", func(t *testing.T) {
 		endpoint := fmt.Sprintf("/v1/ideas/%d", ideas[1].ID)
 		ideaReq, err := http.NewRequest(http.MethodGet, endpoint, bytes.NewReader([]byte{}))
 		if err != nil {
@@ -80,17 +69,11 @@ func TestFetchIdeas(t *testing.T) {
 		ideaRec := httptest.NewRecorder()
 
 		gin.ServeHTTP(ideaRec, ideaReq)
-
-		if ideaRec.Code != http.StatusOK {
-			t.Fatalf("Unexpected response status code: %d\n", ideaRec.Code)
-		}
+		assertEqual(ideaRec.Code, http.StatusOK, t, "Idea should have been fetched")
 
 		ideaResp := domain.Idea{}
 		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
-
-		if ideaResp.Content != ideas[1].Content {
-			t.Fatalf("Unexpected response content:\n expected: %s\n obtained: %s\n", ideas[0].Content, ideaResp.Content)
-		}
+		assertEqual(ideas[1].Content, ideaResp.Content, t, "Unexpected content")
 
 		checkIdeaAssociations(t, &ideaResp)
 	})
@@ -105,8 +88,7 @@ func TestCreateIdeas(t *testing.T) {
 	gin, db := setup()
 	authTokens, user := signup(gin, db, sampleUser())
 
-	t.Run("withNoResources", func(t *testing.T) {
-		// arrange
+	t.Run("Empty", func(t *testing.T) {
 		ideaReqBody := []byte(`{"content": "this is a test idea"}`)
 		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
 		if err != nil {
@@ -117,16 +99,11 @@ func TestCreateIdeas(t *testing.T) {
 		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
 		ideaRec := httptest.NewRecorder()
 
-		// act
 		gin.ServeHTTP(ideaRec, ideaReq)
-
-		// assert
-		if ideaRec.Code != http.StatusBadRequest {
-			t.Fatalf("Unexpected response status code: %d\n", ideaRec.Code)
-		}
+		assertEqual(http.StatusBadRequest, ideaRec.Code, t, "Idea should not have been created")
 	})
 
-	t.Run("withVideos", func(t *testing.T) {
+	t.Run("Videos", func(t *testing.T) {
 		ideaReqBody := []byte(`{
 			"content": "Idea with video and blog resources",
 			"videos": [
@@ -146,78 +123,19 @@ func TestCreateIdeas(t *testing.T) {
 		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
 		ideaRec := httptest.NewRecorder()
 
-		// act
 		gin.ServeHTTP(ideaRec, ideaReq)
-
-		// assert
-		if ideaRec.Code != http.StatusCreated {
-			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
-		}
+		assertEqual(ideaRec.Code, http.StatusCreated, t, "Idea should have been created")
 
 		idea := &domain.Idea{}
 		json.NewDecoder(ideaRec.Body).Decode(idea)
 
-		if idea.Videos[0].Identifier != "p8u_k2LIZyo" {
-			t.Fatalf("Wrong identifier\nExpected: %s\nReturned: %s", "p8u_k2LIZyo", idea.Videos[0].Identifier)
-		}
-
-		if idea.Videos[1].Identifier != "tKbV6BpH-C8" {
-			t.Fatalf("Wrong identifier\nExpected: %s\nReturned: %s", "tKbV6BpH-C8", idea.Videos[1].Identifier)
-		}
-
-		nonYtIdentifier := "https://www.randomvideos.com/videos/12444"
-		if idea.Videos[2].Identifier != nonYtIdentifier {
-			t.Fatalf("Wrong identifier\nExpected: %s\nReturned: %s", nonYtIdentifier, idea.Videos[2].Identifier)
-		}
-
-		if idea.Videos[3].Identifier != "7_cXxEbR_pA" {
-			t.Fatalf("Wrong identifier\nExpected: %s\nReturned: %s", "7_cXxEbR_pA", idea.Videos[3].Identifier)
-		}
+		assertEqual("p8u_k2LIZyo", idea.Videos[0].Identifier, t, "Wrong identifier")
+		assertEqual("tKbV6BpH-C8", idea.Videos[1].Identifier, t, "Wrong identifier")
+		assertEqual("https://www.randomvideos.com/videos/12444", idea.Videos[2].Identifier, t, "Wrong identifier")
+		assertEqual("7_cXxEbR_pA", idea.Videos[3].Identifier, t, "Wrong identifier")
 	})
 
-	t.Run("withMultipleResourceTypes", func(t *testing.T) {
-		ideaReqBody := []byte(`{
-			"content": "Idea with video and blog resources",
-			"videos": [
-				{"url": "https://www.youtube.com/watch?v=f2a_k2LIZyo"},
-				{"url": "https://www.randomvideos.com/videos/11111"}
-			],
-			"blogs": [
-				{"url": "https://cool-blog.com", "category": "low-level-programming"}
-			]
-		}`)
-
-		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
-		if err != nil {
-			t.Fatalf("could not create request: %v\n", err)
-		}
-
-		ideaReq.Header.Add("Content-Type", "application/json")
-		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
-		ideaRec := httptest.NewRecorder()
-
-		// act
-		gin.ServeHTTP(ideaRec, ideaReq)
-
-		// assert
-		if ideaRec.Code != http.StatusCreated {
-			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
-		}
-
-		idea := &domain.Idea{}
-		json.NewDecoder(ideaRec.Body).Decode(idea)
-
-		if len(idea.Videos) == 0 {
-			t.Fatal("No videos found")
-		}
-
-		if len(idea.Blogs) == 0 {
-			t.Fatal("No blogs found")
-		}
-	})
-
-	t.Run("withRelationFields", func(t *testing.T) {
-		// arrange
+	t.Run("VideosWithTimestamp", func(t *testing.T) {
 		ideaReqBody := []byte(`{
 				"content": "Idea with video and blog resources",
 				"videos": [
@@ -241,20 +159,13 @@ func TestCreateIdeas(t *testing.T) {
 		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
 		ideaRec := httptest.NewRecorder()
 
-		// act
 		gin.ServeHTTP(ideaRec, ideaReq)
-
-		// assert
-		if ideaRec.Code != http.StatusCreated {
-			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
-		}
+		assertEqual(http.StatusCreated, ideaRec.Code, t, "Idea should have been created")
 
 		ideaResp := domain.Idea{}
 		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
 
-		if len(ideaResp.Videos) == 0 {
-			t.Fatalf("No videos found")
-		}
+		assertUnequal(0, ideaResp.Videos, t, "No videos found")
 
 		firstIdeaVideoRelation := domain.IdeasVideos{
 			IdeaID:  ideaResp.ID,
@@ -262,25 +173,48 @@ func TestCreateIdeas(t *testing.T) {
 		}
 		db.Find(&firstIdeaVideoRelation)
 
-		if firstIdeaVideoRelation.Timestamp != 124 {
-			t.Fatalf("Timestamp not correctly assigned\n\texpected: %d\n\tgot: %d",
-				124, firstIdeaVideoRelation.Timestamp)
-		}
-
 		secondIdeaVideoRelation := domain.IdeasVideos{
 			IdeaID:  ideaResp.ID,
 			VideoID: ideaResp.Videos[1].ID,
 		}
 		db.Find(&secondIdeaVideoRelation)
 
-		if secondIdeaVideoRelation.Timestamp != 99 {
-			t.Fatalf("Timestamp not correctly assigned\n\texpected: %d\n\tgot: %d",
-				99, secondIdeaVideoRelation.Timestamp)
-		}
+		assertEqual(int16(124), firstIdeaVideoRelation.Timestamp, t, "Timestamp not correcly assigned")
+		assertEqual(int16(99), secondIdeaVideoRelation.Timestamp, t, "Timestamp not correcly assigned")
 	})
 
-	t.Run("withExistingVideo", func(t *testing.T) {
-		// arrange
+	t.Run("MultipleTypes", func(t *testing.T) {
+		ideaReqBody := []byte(`{
+			"content": "Idea with video and blog resources",
+			"videos": [
+				{"url": "https://www.youtube.com/watch?v=f2a_k2LIZyo"},
+				{"url": "https://www.randomvideos.com/videos/11111"}
+			],
+			"blogs": [
+				{"url": "https://cool-blog.com", "category": "low-level-programming"}
+			]
+		}`)
+
+		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		ideaReq.Header.Add("Content-Type", "application/json")
+		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		ideaRec := httptest.NewRecorder()
+
+		gin.ServeHTTP(ideaRec, ideaReq)
+		assertEqual(http.StatusCreated, ideaRec.Code, t, "Idea should have been created")
+
+		idea := &domain.Idea{}
+		json.NewDecoder(ideaRec.Body).Decode(idea)
+
+		assertUnequal(0, len(idea.Videos), t, "No videos found")
+		assertUnequal(0, len(idea.Blogs), t, "No blogs found")
+	})
+
+	t.Run("ExistingVideo", func(t *testing.T) {
 		db.Create(&domain.Video{
 			Url:        "https://some-random-url.com",
 			Identifier: "https://some-random-url.com",
@@ -313,31 +247,20 @@ func TestCreateIdeas(t *testing.T) {
 
 		previousVideosCount := len(fetchResources(db, []domain.Video{}))
 
-		// act
 		gin.ServeHTTP(ideaRec, ideaReq)
+		assertEqual(http.StatusCreated, ideaRec.Code, t, "Idea should have been created")
+
 		gin.ServeHTTP(anotherIdeaRec, anotherIdeaReq)
-
-		// assert
-		if ideaRec.Code != http.StatusCreated {
-			t.Fatalf("Response returned with an unexpected status code: +%v\n", ideaRec.Body)
-		}
-
-		if anotherIdeaRec.Code != http.StatusCreated {
-			t.Fatalf("Response returned with an unexpected status code: %d\n", anotherIdeaRec.Code)
-		}
+		assertEqual(http.StatusCreated, anotherIdeaRec.Code, t, "Idea should have been created")
 
 		currentVideosCount := len(fetchResources(db, []domain.Video{}))
-
-		if previousVideosCount != currentVideosCount {
-			t.Fatalf("Number of blogs increased from %d to %d", previousVideosCount, currentVideosCount)
-		}
+		assertEqual(previousVideosCount, currentVideosCount, t, "Number of blogs increased")
 	})
 
-	t.Run("withAnchorIdeas", func(t *testing.T) {
-		// arrange
+	t.Run("AnchorIdeas", func(t *testing.T) {
 		ideas := seedIdeas(db, user)
-		ideaReqBody := []byte(fmt.Sprintf((`{"content": "New idea with two anchor ideas",
-			"anchors": [{"id": %d}, {"id": %d}]}`), ideas[0].ID, ideas[1].ID))
+		reqString := `{"content": "New idea with two anchor ideas", "anchors": [{"id": %d}, {"id": %d}]}`
+		ideaReqBody := []byte(fmt.Sprintf(reqString, ideas[0].ID, ideas[1].ID))
 
 		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
 		if err != nil {
@@ -348,23 +271,15 @@ func TestCreateIdeas(t *testing.T) {
 		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
 		ideaRec := httptest.NewRecorder()
 
-		// act
 		gin.ServeHTTP(ideaRec, ideaReq)
-
-		// assert
-		if ideaRec.Code != http.StatusCreated {
-			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
-		}
+		assertEqual(http.StatusCreated, ideaRec.Code, t, "Idea should have been created")
 
 		ideaResp := &domain.Idea{}
 		json.NewDecoder(ideaRec.Body).Decode(ideaResp)
-
-		if len(ideaResp.Anchors) != len(ideas) {
-			t.Fatalf("Expected %d anchor ideas, obtained %d\n", len(ideas), len(ideaResp.Anchors))
-		}
+		assertEqual(len(ideas), len(ideaResp.Anchors), t, "Different number of anchor ideas")
 	})
 
-	t.Run("withBookAndChapter", func(t *testing.T) {
+	t.Run("BookAndChapter", func(t *testing.T) {
 		bookResources := `[
 			{
 				"url": "https://openlibrary.org/works/OL20984004W",
@@ -402,11 +317,9 @@ func TestCreateIdeas(t *testing.T) {
 		ideaReq.Header.Add("Content-Type", "application/json")
 		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
 		ideaRec := httptest.NewRecorder()
-		gin.ServeHTTP(ideaRec, ideaReq)
 
-		if ideaRec.Code != http.StatusCreated {
-			t.Fatalf("Response returned with an unexpected status code: %d\n", ideaRec.Code)
-		}
+		gin.ServeHTTP(ideaRec, ideaReq)
+		assertEqual(http.StatusCreated, ideaRec.Code, t, "Idea should have been created")
 
 		ideaResp := &domain.Idea{}
 		json.NewDecoder(ideaRec.Body).Decode(ideaResp)
@@ -417,22 +330,17 @@ func TestCreateIdeas(t *testing.T) {
 		}
 		db.Find(firstBookIdeaRel)
 
-		if firstBookIdeaRel.Chapter == "" {
-			t.Fatal("Chapter field from the book idea relation is empty")
-		}
-
 		secondBookIdeaRel := &domain.BooksIdeas{
 			IdeaID: ideaResp.ID,
 			BookID: ideaResp.Books[1].ID,
 		}
 		db.Find(secondBookIdeaRel)
 
-		if secondBookIdeaRel.Chapter != "" {
-			t.Fatal("Chapter field from the book idea relation should be empty")
-		}
+		assertUnequal("", firstBookIdeaRel.Chapter, t, "First book idea relation chapter is empty")
+		assertEqual("", secondBookIdeaRel.Chapter, t, "Second book idea relation chapter not empty")
 	})
 
-	t.Run("twoIdeasSameBook", func(t *testing.T) {
+	t.Run("SameBook", func(t *testing.T) {
 		bookResource := `{
 			"url": "https://openlibrary.org/works/OL00000000A",
 			"open_library_key": "OL00000000A",
@@ -451,7 +359,9 @@ func TestCreateIdeas(t *testing.T) {
 		firstIdeaReq.Header.Add("Content-Type", "application/json")
 		firstIdeaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
 		firstIdeaRec := httptest.NewRecorder()
+
 		gin.ServeHTTP(firstIdeaRec, firstIdeaReq)
+		assertEqual(http.StatusCreated, firstIdeaRec.Code, t, "First idea should have been created")
 
 		ideaResp := &domain.Idea{}
 		json.NewDecoder(firstIdeaRec.Body).Decode(ideaResp)
@@ -462,15 +372,13 @@ func TestCreateIdeas(t *testing.T) {
 		secondIdeaReq.Header.Add("Content-Type", "application/json")
 		secondIdeaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
 		secondIdeaRec := httptest.NewRecorder()
-		gin.ServeHTTP(secondIdeaRec, secondIdeaReq)
 
-		// check that many to many has two entries for the book
+		gin.ServeHTTP(secondIdeaRec, secondIdeaReq)
+		assertEqual(http.StatusCreated, secondIdeaRec.Code, t, "Second idea should have been created")
+
 		bookIdeasRels := []domain.BooksIdeas{}
 		db.Where([]domain.BooksIdeas{{BookID: bookID}}).Find(&bookIdeasRels)
-
-		if len(bookIdeasRels) != 2 {
-			t.Fatalf("books_ideas entries for bookID %d\nexpected: %d, got: %d", bookID, 2, len(bookIdeasRels))
-		}
+		assertEqual(2, len(bookIdeasRels), t, fmt.Sprintf("Wrong amount of entries for %d", bookID))
 	})
 
 	t.Cleanup(func() {
@@ -495,18 +403,12 @@ func TestDeleteIdea(t *testing.T) {
 	ideaRec := httptest.NewRecorder()
 
 	gin.ServeHTTP(ideaRec, ideaReq)
+	assertEqual(ideaRec.Code, http.StatusAccepted, t, "Idea should have been deleted")
 
-	if ideaRec.Code != http.StatusAccepted {
-		t.Fatalf("Unexpected response status code: %d\n", ideaRec.Code)
-	}
-
-	// test fetch idea -> should be empty
 	var idea domain.Idea
 	db.First(&idea, ideas[1].ID)
 
-	if idea.ID != 0 {
-		t.Fatalf("Idea with ID: %d should not exist", ideas[1].ID)
-	}
+	assertUnequal(0, idea.ID, t, "Idea should have been deleted")
 
 	t.Cleanup(func() {
 		cleanupDatabase(db)
@@ -573,23 +475,9 @@ func cleanupDatabase(db *gorm.DB) {
 }
 
 func checkIdeaAssociations(t *testing.T, idea *domain.Idea) {
-	if len(idea.Blogs) == 0 {
-		t.Fatalf("Blogs missing, expected: %d, obtained: %d", 1, len(idea.Blogs))
-	}
-
-	if len(idea.Videos) == 0 {
-		t.Fatalf("Videos missing, expected: %d, obtained: %d", 1, len(idea.Videos))
-	}
-
-	if len(idea.Anchors) == 0 {
-		t.Fatalf("Anchor ideas missing, expected: %d, obtained: %d", 1, len(idea.Anchors))
-	}
-
-	if len(idea.Books) == 0 {
-		t.Fatalf("Books missing, expected: %d, obtained: %d", 1, len(idea.Books))
-	}
-
-	if len(idea.Books[0].Authors) == 0 {
-		t.Fatalf("Author missing on books, expected: %d, obtained: %d", 1, len(idea.Books[0].Authors))
-	}
+	assertUnequal(0, len(idea.Blogs), t, "Blogs missing")
+	assertUnequal(0, len(idea.Videos), t, "Videos missing")
+	assertUnequal(0, len(idea.Anchors), t, "Anchors missing")
+	assertUnequal(0, len(idea.Books), t, "Books missing")
+	assertUnequal(0, len(idea.Books[0].Authors), t, "Authors missing")
 }

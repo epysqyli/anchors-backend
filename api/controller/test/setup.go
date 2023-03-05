@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
 	routev1 "github.com/epysqyli/anchors-backend/api/route/v1"
 	"github.com/epysqyli/anchors-backend/bootstrap"
@@ -13,6 +14,26 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
+
+func assertEqual(exp any, got any, t *testing.T, info ...string) {
+	if exp != got {
+		if len(info) == 0 {
+			t.Fatalf("\n\n-- expected: %v\n-- obtained: %v\n\n", exp, got)
+		} else {
+			t.Fatalf("\n\n%s\n-- expected: %v\n-- obtained: %v\n\n", info[0], exp, got)
+		}
+	}
+}
+
+func assertUnequal(value any, got any, t *testing.T, info ...string) {
+	if value == got {
+		if len(info) == 0 {
+			t.Fatalf("\n\n-- value: %v\n-- obtained: %v\n\n", value, got)
+		} else {
+			t.Fatalf("\n\n%s\n-- value: %v\n-- obtained: %v\n\n", info[0], value, got)
+		}
+	}
+}
 
 func setup() (*gin.Engine, *gorm.DB) {
 	app := bootstrap.App("../../../.env", "test")
