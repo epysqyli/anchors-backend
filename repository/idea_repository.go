@@ -38,6 +38,8 @@ func (ir *IdeaRepository) FetchAll(c context.Context) ([]domain.Idea, error) {
 		Preload("Videos").
 		Preload("Anchors").
 		Preload("Books.Authors").
+		Preload("Movies").
+		Preload("Movies.Genres").
 		Find(&ideas)
 
 	return ideas, res.Error
@@ -50,6 +52,8 @@ func (ir *IdeaRepository) FetchByUserID(c context.Context, userID string) ([]dom
 		Preload("Videos").
 		Preload("Anchors").
 		Preload("Books.Authors").
+		Preload("Movies").
+		Preload("Movies.Genres").
 		Find(&ideas, "user_id = ?", userID)
 
 	return ideas, res.Error
@@ -63,6 +67,8 @@ func (ir *IdeaRepository) FetchByID(c context.Context, id string) (domain.Idea, 
 		Preload("Videos").
 		Preload("Anchors").
 		Preload("Books.Authors").
+		Preload("Movies").
+		Preload("Movies.Genres").
 		First(&idea, id)
 
 	return idea, res.Error

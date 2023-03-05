@@ -18,19 +18,19 @@ import (
 func assertEqual(exp any, got any, t *testing.T, info ...string) {
 	if exp != got {
 		if len(info) == 0 {
-			t.Fatalf("\n\n-- expected: %v\n-- obtained: %v\n\n", exp, got)
+			t.Fatalf("\n\n  expected: %v\n  obtained: %v\n\n", exp, got)
 		} else {
-			t.Fatalf("\n\n%s\n-- expected: %v\n-- obtained: %v\n\n", info[0], exp, got)
+			t.Fatalf("\n\n%s\n  expected: %v\n  obtained: %v\n\n", info[0], exp, got)
 		}
 	}
 }
 
-func assertUnequal(value any, got any, t *testing.T, info ...string) {
-	if value == got {
+func assertUnequal(exp any, got any, t *testing.T, info ...string) {
+	if exp == got {
 		if len(info) == 0 {
-			t.Fatalf("\n\n-- value: %v\n-- obtained: %v\n\n", value, got)
+			t.Fatalf("\n\n  %c expected: %v\n  obtained: %v\n\n", rune(172), exp, got)
 		} else {
-			t.Fatalf("\n\n%s\n-- value: %v\n-- obtained: %v\n\n", info[0], value, got)
+			t.Fatalf("\n\n%s\n  %c expected: %v\n  obtained: %v\n\n", info[0], rune(172), exp, got)
 		}
 	}
 }

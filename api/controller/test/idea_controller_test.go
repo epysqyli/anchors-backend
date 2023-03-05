@@ -388,6 +388,10 @@ func TestCreateIdeas(t *testing.T) {
 		assertEqual(2, len(bookIdeasRels), t, fmt.Sprintf("Wrong amount of entries for book ID: %d", bookID))
 	})
 
+	t.Run("SameMovie", func(t *testing.T) {
+		t.Skip()
+	})
+
 	t.Cleanup(func() {
 		cleanupDatabase(db)
 		cleanupUser(db, sampleUser().Name)
@@ -444,6 +448,17 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 		},
 	}
 
+	movie := domain.Movie{
+		Identifier:       311,
+		Title:            "Once Upon a Time in America",
+		OriginalTitle:    "Once Upon a Time in America",
+		PosterPath:       "/uPYa165sraN2c8gZBM9C47g3JoU.jpg",
+		ReleaseDate:      "1984-05-23",
+		Runtime:          229,
+		OriginalLanguage: "en",
+		Genres:           []domain.CinematicGenre{{Name: "Drama"}, {Name: "Crime"}},
+	}
+
 	fullIdea := &domain.Idea{
 		UserID:  user.ID,
 		Content: "Content for an idea anchored upon a blog",
@@ -451,6 +466,7 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 		Videos:  []domain.Video{{Url: "https://some-youtube-video.com", YoutubeChannel: "cool-channel"}},
 		Anchors: []*domain.Idea{emptyIdea},
 		Books:   []domain.Book{book},
+		Movies:  []domain.Movie{movie},
 	}
 
 	db.Create(fullIdea)
@@ -474,6 +490,10 @@ func cleanupDatabase(db *gorm.DB) {
 	db.Exec("delete from blogs_ideas")
 	db.Exec("delete from books_ideas")
 	db.Exec("delete from authors_books")
+	db.Exec("delete from ideas_movies")
+	db.Exec("delete from cinematic_genres_movies")
+	db.Exec("delete from cinematic_genres")
+	db.Exec("delete from movies")
 	db.Exec("delete from authors")
 	db.Exec("delete from books")
 	db.Exec("delete from videos")
@@ -485,6 +505,8 @@ func checkIdeaAssociations(t *testing.T, idea *domain.Idea) {
 	assertUnequal(0, len(idea.Blogs), t, "Blogs missing")
 	assertUnequal(0, len(idea.Videos), t, "Videos missing")
 	assertUnequal(0, len(idea.Anchors), t, "Anchors missing")
+	assertUnequal(0, len(idea.Movies), t, "Movies missing")
+	assertUnequal(0, len(idea.Movies[0].Genres), t, "Cinematic genres missing")
 	assertUnequal(0, len(idea.Books), t, "Books missing")
 	assertUnequal(0, len(idea.Books[0].Authors), t, "Authors missing")
 }

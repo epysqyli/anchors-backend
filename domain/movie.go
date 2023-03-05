@@ -11,7 +11,7 @@ type Movie struct {
 	ReleaseDate      string           `json:"release_date" gorm:"size:10"`
 	Runtime          uint16           `json:"runtime"`
 	OriginalLanguage string           `json:"original_language" gorm:"not null;size:30"`
-	Genres           []CinematicGenre `json:"genres" gorm:"many2many:genre_movies"`
+	Genres           []CinematicGenre `json:"genres" gorm:"many2many:cinematic_genres_movies"`
 }
 
 type CinematicGenre struct {
