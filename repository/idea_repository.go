@@ -30,7 +30,7 @@ func (ir *IdeaRepository) Create(c context.Context, idea *domain.Idea) error {
 	return nil
 }
 
-// the main general feed: pagination needs to be set up
+// the main feed: querying and pagination need to be set up
 func (ir *IdeaRepository) FetchAll(c context.Context) ([]domain.Idea, error) {
 	var ideas []domain.Idea
 	res := ir.database.
@@ -55,11 +55,7 @@ func (ir *IdeaRepository) FetchByUserID(c context.Context, userID string) ([]dom
 	return ideas, res.Error
 }
 
-/**
- * each 'preload' executes a query
- * can gorm 'joins' be used to execute a single query on many to many tables?
- * optimize when and if necessary
- */
+// each 'preload' executes a query, optimize when and if necessary
 func (ir *IdeaRepository) FetchByID(c context.Context, id string) (domain.Idea, error) {
 	var idea domain.Idea
 	res := ir.database.
@@ -118,8 +114,7 @@ func (ir *IdeaRepository) assignExistingIDs(idea *domain.Idea) {
 	}
 }
 
-// implement logic to assign unique identifier for each resource type
-// example: video identifier, youtube_channel if present and more
+// assign unique identifiers and other computed fields based on the resource
 func (ir *IdeaRepository) assignResourceFields(idea *domain.Idea) {
 	for i, video := range idea.Videos {
 		if video.Identifier == "" {
@@ -129,10 +124,7 @@ func (ir *IdeaRepository) assignResourceFields(idea *domain.Idea) {
 	}
 }
 
-/**
- *	can this be done with an afterCreate DB hook?
- *  can db calls be limited to a single call?
- */
+// afterCreate DB hook?
 func (ir *IdeaRepository) assignRelationFields(idea *domain.Idea) {
 	for _, video := range idea.Videos {
 		if video.Timestamp != 0 {
