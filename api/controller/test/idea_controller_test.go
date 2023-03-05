@@ -259,8 +259,8 @@ func TestCreateIdeas(t *testing.T) {
 
 	t.Run("AnchorIdeas", func(t *testing.T) {
 		ideas := seedIdeas(db, user)
-		reqString := `{"content": "New idea with two anchor ideas", "anchors": [{"id": %d}, {"id": %d}]}`
-		ideaReqBody := []byte(fmt.Sprintf(reqString, ideas[0].ID, ideas[1].ID))
+		req := `{"content": "New idea with two anchor ideas", "anchors": [{"id": %d}, {"id": %d}]}`
+		ideaReqBody := []byte(fmt.Sprintf(req, ideas[0].ID, ideas[1].ID))
 
 		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
 		if err != nil {
@@ -271,15 +271,22 @@ func TestCreateIdeas(t *testing.T) {
 		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
 		ideaRec := httptest.NewRecorder()
 
+		previousIdeas := []domain.Idea{}
+		db.Find(&previousIdeas)
+
 		gin.ServeHTTP(ideaRec, ideaReq)
 		assertEqual(http.StatusCreated, ideaRec.Code, t, "Idea should have been created")
+
+		currentIdeas := []domain.Idea{}
+		db.Find(&currentIdeas)
 
 		ideaResp := &domain.Idea{}
 		json.NewDecoder(ideaRec.Body).Decode(ideaResp)
 		assertEqual(len(ideas), len(ideaResp.Anchors), t, "Different number of anchor ideas")
+		assertEqual(len(previousIdeas)+1, len(currentIdeas), t, "Different number of total ideas")
 	})
 
-	t.Run("BookAndChapter", func(t *testing.T) {
+	t.Run("BookWithChapter", func(t *testing.T) {
 		bookResources := `[
 			{
 				"url": "https://openlibrary.org/works/OL20984004W",
@@ -378,7 +385,7 @@ func TestCreateIdeas(t *testing.T) {
 
 		bookIdeasRels := []domain.BooksIdeas{}
 		db.Where([]domain.BooksIdeas{{BookID: bookID}}).Find(&bookIdeasRels)
-		assertEqual(2, len(bookIdeasRels), t, fmt.Sprintf("Wrong amount of entries for %d", bookID))
+		assertEqual(2, len(bookIdeasRels), t, fmt.Sprintf("Wrong amount of entries for book ID: %d", bookID))
 	})
 
 	t.Cleanup(func() {
