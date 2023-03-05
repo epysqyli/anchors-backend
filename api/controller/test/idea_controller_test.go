@@ -389,6 +389,47 @@ func TestCreateIdeas(t *testing.T) {
 	})
 
 	t.Run("SameMovie", func(t *testing.T) {
+		movieResource := `{
+			"identifier": 62,
+			"title": "2001: A Space Odyssey",
+			"original_title": "2001: A Space Odyssey",
+			"poster_path": "/15FumSExI9SRoL7QJWZAsA0b10c.jpg",
+			"release_date": "1968-04-02",
+			"runtime": 149,
+			"original_language": "eng",
+			"genres": [
+				{"name": "Science Fiction", "name": "Mystery", "name": "Adventure"}
+			]
+		}`
+
+		firstIdea := fmt.Sprintf((`{"content": "Some idea - movie one", "movies": [%s]}`), movieResource)
+		firstIdeaReq, _ := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader([]byte(firstIdea)))
+		firstIdeaReq.Header.Add("Content-Type", "application/json")
+		firstIdeaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		firstIdeaRec := httptest.NewRecorder()
+
+		gin.ServeHTTP(firstIdeaRec, firstIdeaReq)
+		assertEqual(http.StatusCreated, firstIdeaRec.Code, t, "First idea should have been created")
+
+		ideaResp := &domain.Idea{}
+		json.NewDecoder(firstIdeaRec.Body).Decode(ideaResp)
+		movieID := ideaResp.Movies[0].ID
+
+		secondIdea := fmt.Sprintf((`{"content": "Another idea - movie one", "movies": [%s]}`), movieResource)
+		secondIdeaReq, _ := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader([]byte(secondIdea)))
+		secondIdeaReq.Header.Add("Content-Type", "application/json")
+		secondIdeaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		secondIdeaRec := httptest.NewRecorder()
+
+		gin.ServeHTTP(secondIdeaRec, secondIdeaReq)
+		assertEqual(http.StatusCreated, secondIdeaRec.Code, t, "Second idea should have been created")
+
+		moviesIdeasRels := []domain.IdeasMovies{}
+		db.Where([]domain.IdeasMovies{{MovieID: movieID}}).Find(&moviesIdeasRels)
+		assertEqual(2, len(moviesIdeasRels), t, fmt.Sprintf("Wrong amount of entries for movie ID: %d", movieID))
+	})
+
+	t.Run("MovieWithScene", func(t *testing.T) {
 		t.Skip()
 	})
 

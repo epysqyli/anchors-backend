@@ -118,6 +118,32 @@ func (ir *IdeaRepository) assignExistingIDs(idea *domain.Idea) {
 			}
 		}
 	}
+
+	for im, movie := range idea.Movies {
+		if movie.ID == 0 {
+			m := domain.Movie{}
+			ir.database.Where(&domain.Movie{Identifier: movie.Identifier}).First(&m)
+
+			if m.ID != 0 {
+				moviePtr := &idea.Movies[im]
+				moviePtr.ID = m.ID
+			}
+
+			if movie.Genres == nil {
+				continue
+			}
+
+			for ig, genre := range movie.Genres {
+				g := domain.CinematicGenre{}
+				ir.database.Where(&domain.CinematicGenre{Name: genre.Name}).First(&g)
+
+				if g.ID != 0 {
+					genrePtr := &movie.Genres[ig]
+					genrePtr.ID = g.ID
+				}
+			}
+		}
+	}
 }
 
 // assign unique identifiers and other computed fields based on the resource

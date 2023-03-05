@@ -34,6 +34,7 @@ func (idea Idea) HasNoResources() bool {
 	if idea.Blogs == nil &&
 		idea.Videos == nil &&
 		idea.Books == nil &&
+		idea.Movies == nil &&
 		idea.Anchors == nil {
 		return true
 	}
