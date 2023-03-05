@@ -62,8 +62,10 @@ func NewPostgresDatabase(env *Env) *gorm.DB {
 		migration.Blogs(),
 		migration.BlogsIdeas(),
 		migration.Books(),
-		migration.BooksIdeas(),
 		migration.Authors(),
+		migration.BooksIdeas(),
+		migration.CinematicGenres(),
+		migration.Movies(),
 	})
 
 	if err = migrations.Migrate(); err != nil {

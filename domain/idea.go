@@ -14,6 +14,7 @@ type Idea struct {
 	Videos  []Video `gorm:"many2many:ideas_videos;" json:"videos"`
 	Blogs   []Blog  `gorm:"many2many:blogs_ideas;" json:"blogs"`
 	Books   []Book  `gorm:"many2many:books_ideas" json:"books"`
+	Movies  []Movie `gorm:"many2many:ideas_movies" json:"movies"`
 	Anchors []*Idea `gorm:"many2many:anchors_ideas;" json:"anchors"`
 }
 
