@@ -300,7 +300,7 @@ func TestCreateIdeas(t *testing.T) {
 					{"open_library_key": "OL7945937A", "full_name": "James Fouhey"},
 					{"open_library_key": "OL8027052A", "full_name": "Saifedean Ammous"}
 				],
-				"chapter": "2 - the greatest chapter of all time"
+				"chapter": "2 - the greatest chapter"
 			},
 			{
 				"url": "https://openlibrary.org/works/OL20984100F",
@@ -310,7 +310,8 @@ func TestCreateIdeas(t *testing.T) {
 				"number_of_pages": 200,
 				"open_library_id": 10320100,
 				"language": "eng",
-				"authors": [{"open_library_key": "OL1005931M", "full_name": "Best Writer"}]
+				"authors": [{"open_library_key": "OL1005931M", "full_name": "Best Writer"}],
+				"chapter": "3 - another good chapter"
 			}
 		]`
 
@@ -343,8 +344,11 @@ func TestCreateIdeas(t *testing.T) {
 		}
 		db.Find(secondBookIdeaRel)
 
-		assertUnequal("", firstBookIdeaRel.Chapter, t, "First book idea relation chapter is empty")
-		assertEqual("", secondBookIdeaRel.Chapter, t, "Second book idea relation chapter not empty")
+		assertEqual("2 - the greatest chapter", firstBookIdeaRel.Chapter, t,
+			fmt.Sprintf("Wrong chapter - book ID %d", ideaResp.Books[0].ID))
+
+		assertEqual("3 - another good chapter", secondBookIdeaRel.Chapter, t,
+			fmt.Sprintf("Wrong chapter - book ID %d", ideaResp.Books[0].ID))
 	})
 
 	t.Run("SameBook", func(t *testing.T) {
