@@ -148,6 +148,7 @@ func (ir *IdeaRepository) assignExistingIDs(idea *domain.Idea) {
 
 // assign unique identifiers and other computed fields based on the resource
 func (ir *IdeaRepository) assignResourceFields(idea *domain.Idea) {
+	// assign youtube channel as well - might just happen on the frontend
 	for i, video := range idea.Videos {
 		if video.Identifier == "" {
 			videoPtr := &idea.Videos[i]

@@ -10,7 +10,7 @@ type Video struct {
 	gorm.Model
 	Url            string `json:"url" gorm:"not null"`
 	Identifier     string `json:"identifier" gorm:"unique;not null"` // duplicate URL for non youtube videos for querying purposes
-	YoutubeChannel string `json:"youtube_channel"`                   // gorm:"-"` retrieve via API if ab_channel or alternative missing
+	YoutubeChannel string `json:"youtube_channel"`
 	Ideas          []Idea `gorm:"many2many:ideas_videos;"`
 	Timestamp      int16  `json:"timestamp" gorm:"-"`
 }
