@@ -2,11 +2,9 @@ package domain
 
 import "gorm.io/gorm"
 
-// have also ideas_movies struct on this same file for clarity?
-
 type Movie struct {
 	gorm.Model
-	Identifier       uint32           `json:"identifier" gorm:"not null;unique"` // id from TDBM frontend resp
+	Identifier       uint32           `json:"identifier" gorm:"not null;unique"` // TMDB id
 	Title            string           `json:"title" gorm:"not null"`
 	OriginalTitle    string           `json:"original_title" gorm:"not null"`
 	PosterPath       string           `json:"poster_path" gorm:"size:100"`
