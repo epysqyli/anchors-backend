@@ -289,7 +289,6 @@ func TestCreateIdeas(t *testing.T) {
 	t.Run("BookWithChapter", func(t *testing.T) {
 		bookResources := `[
 			{
-				"url": "https://openlibrary.org/works/OL20984004W",
 				"open_library_key": "OL20984004W",
 				"title": "The Bitcoin Standard",
 				"year": 2018,
@@ -303,7 +302,6 @@ func TestCreateIdeas(t *testing.T) {
 				"chapter": "2 - the greatest chapter"
 			},
 			{
-				"url": "https://openlibrary.org/works/OL20984100F",
 				"open_library_key": "OL20984100F",
 				"title": "The Whatever Book Title",
 				"year": 2000,
@@ -353,7 +351,6 @@ func TestCreateIdeas(t *testing.T) {
 
 	t.Run("SameBook", func(t *testing.T) {
 		bookResource := `{
-			"url": "https://openlibrary.org/works/OL00000000A",
 			"open_library_key": "OL00000000A",
 			"title": "Basic book title",
 			"year": 2000,
@@ -512,7 +509,6 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 	db.Create(emptyIdea)
 
 	book := domain.Book{
-		Url:            "https://openlibrary.org/works/OL02600010B",
 		OpenLibraryKey: "OL02600010B",
 		Title:          "Book from seeds",
 		Year:           1999,

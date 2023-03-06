@@ -4,7 +4,6 @@ import "gorm.io/gorm"
 
 type Book struct {
 	gorm.Model
-	Url            string   `json:"url" gorm:"not null"` // openlibrary.org/works/{OpenLibraryKey}/Layered_Money
 	OpenLibraryKey string   `json:"open_library_key" gorm:"not null;unique"`
 	Title          string   `json:"title" gorm:"not null"`
 	Year           uint16   `json:"year"` // first_publish_year
