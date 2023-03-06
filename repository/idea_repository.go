@@ -173,4 +173,12 @@ func (ir *IdeaRepository) assignRelationFields(idea *domain.Idea) {
 				Update("chapter", book.Chapter)
 		}
 	}
+
+	for _, movie := range idea.Movies {
+		if movie.Scene != "" {
+			ir.database.
+				Model(domain.IdeasMovies{IdeaID: idea.ID, MovieID: movie.ID}).
+				Update("scene", movie.Scene)
+		}
+	}
 }

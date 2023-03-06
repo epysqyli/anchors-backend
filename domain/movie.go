@@ -14,6 +14,7 @@ type Movie struct {
 	Runtime          uint16           `json:"runtime"`
 	OriginalLanguage string           `json:"original_language" gorm:"not null;size:30"`
 	Genres           []CinematicGenre `json:"genres" gorm:"many2many:cinematic_genres_movies"`
+	Scene            string           `json:"scene" gorm:"-;size:256"`
 }
 
 type CinematicGenre struct {

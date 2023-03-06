@@ -430,7 +430,38 @@ func TestCreateIdeas(t *testing.T) {
 	})
 
 	t.Run("MovieWithScene", func(t *testing.T) {
-		t.Skip()
+		scene := "When Joe meets Annie for the first time outside of the blue building."
+
+		movieResource := fmt.Sprintf(`{
+			"identifier": 10123,
+			"title": "2002: A Galaxy Odyssey",
+			"original_title": "2002: A Galaxy Odyssey",
+			"poster_path": "/19XumSExI9SRoL7QJWZAsA0b10c.jpg",
+			"release_date": "1970-01-01",
+			"runtime": 180,
+			"original_language": "eng",
+			"genres": [
+				{"name": "Science Fiction", "name": "Mystery", "name": "Adventure"}
+			],
+			"scene": "%s"
+		}`, scene)
+
+		idea := fmt.Sprintf((`{"content": "Some random idea", "movies": [%s]}`), movieResource)
+		ideaReq, _ := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader([]byte(idea)))
+		ideaReq.Header.Add("Content-Type", "application/json")
+		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		ideaRec := httptest.NewRecorder()
+
+		gin.ServeHTTP(ideaRec, ideaReq)
+		assertEqual(http.StatusCreated, ideaRec.Code, t, "Idea should have been created")
+
+		ideaResp := domain.Idea{}
+		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
+
+		ideaMovieRel := domain.IdeasMovies{}
+		db.Where(&domain.IdeasMovies{MovieID: ideaResp.Movies[0].ID, IdeaID: ideaResp.ID}).First(&ideaMovieRel)
+
+		assertEqual(scene, ideaMovieRel.Scene, t, "Scene field not assigned correctly on ideas_movies")
 	})
 
 	t.Cleanup(func() {
