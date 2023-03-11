@@ -144,6 +144,8 @@ func (ir *IdeaRepository) assignExistingIDs(idea *domain.Idea) {
 			}
 		}
 	}
+
+	// add IDs for idea.Songs
 }
 
 // assign unique identifiers and other computed fields based on the resource

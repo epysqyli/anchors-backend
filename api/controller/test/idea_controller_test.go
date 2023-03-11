@@ -465,6 +465,10 @@ func TestCreateIdeas(t *testing.T) {
 		assertEqual(scene, ideaMovieRel.Scene, t, "Scene field not assigned correctly on ideas_movies")
 	})
 
+	t.Run("Songs", func(t *testing.T) {
+		t.Skip()
+	})
+
 	t.Cleanup(func() {
 		cleanupDatabase(db)
 		cleanupUser(db, sampleUser().Name)
