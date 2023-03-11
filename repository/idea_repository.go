@@ -40,6 +40,9 @@ func (ir *IdeaRepository) FetchAll(c context.Context) ([]domain.Idea, error) {
 		Preload("Books.Authors").
 		Preload("Movies").
 		Preload("Movies.Genres").
+		Preload("Songs").
+		Preload("Songs.MusicalAlbum").
+		Preload("Songs.Artists").
 		Find(&ideas)
 
 	return ideas, res.Error
@@ -72,6 +75,9 @@ func (ir *IdeaRepository) FetchByID(c context.Context, id string) (domain.Idea, 
 		Preload("Books.Authors").
 		Preload("Movies").
 		Preload("Movies.Genres").
+		Preload("Songs").
+		Preload("Songs.MusicalAlbum").
+		Preload("Songs.Artists").
 		First(&idea, id)
 
 	return idea, res.Error
