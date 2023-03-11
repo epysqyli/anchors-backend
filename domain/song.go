@@ -8,7 +8,7 @@ type Song struct {
 	SpotifyUrl            string          `json:"spotify_url" gorm:"size:512"`
 	PreviewUrl            string          `json:"preview_url" gorm:"size:512"`
 	Artists               []MusicalArtist `json:"artists" gorm:"many2many:musical_artists_songs"`
-	Album                 MusicalAlbum    `json:"album" gorm:"-"`
+	MusicalAlbum          MusicalAlbum    `json:"album"`
 	MusicalAlbumSpotifyID string
 	CreatedAt             time.Time
 	UpdatedAt             time.Time

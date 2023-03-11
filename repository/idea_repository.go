@@ -54,6 +54,9 @@ func (ir *IdeaRepository) FetchByUserID(c context.Context, userID string) ([]dom
 		Preload("Books.Authors").
 		Preload("Movies").
 		Preload("Movies.Genres").
+		Preload("Songs").
+		Preload("Songs.MusicalAlbum").
+		Preload("Songs.Artists").
 		Find(&ideas, "user_id = ?", userID)
 
 	return ideas, res.Error
@@ -144,11 +147,9 @@ func (ir *IdeaRepository) assignExistingIDs(idea *domain.Idea) {
 			}
 		}
 	}
-
-	// add IDs for idea.Songs
 }
 
-// assign unique identifiers and other computed fields based on the resource
+// beforeCreate hook: assign unique identifiers and other computed fields based on the resource
 func (ir *IdeaRepository) assignResourceFields(idea *domain.Idea) {
 	// assign youtube channel as well - might just happen on the frontend
 	for i, video := range idea.Videos {
@@ -162,12 +163,12 @@ func (ir *IdeaRepository) assignResourceFields(idea *domain.Idea) {
 		songPtr := &idea.Songs[i]
 
 		album := domain.MusicalAlbum{}
-		ir.database.Where(&domain.MusicalAlbum{SpotifyID: song.Album.SpotifyID}).First(&album)
+		ir.database.Where(&domain.MusicalAlbum{SpotifyID: song.MusicalAlbum.SpotifyID}).First(&album)
 		if album.SpotifyID == "" {
-			ir.database.Create(song.Album)
+			ir.database.Create(song.MusicalAlbum)
 		}
 
-		songPtr.MusicalAlbumSpotifyID = song.Album.SpotifyID
+		songPtr.MusicalAlbumSpotifyID = song.MusicalAlbum.SpotifyID
 	}
 }
 

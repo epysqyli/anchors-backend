@@ -49,7 +49,7 @@ func TestFetchIdeas(t *testing.T) {
 		ideaRec := httptest.NewRecorder()
 
 		gin.ServeHTTP(ideaRec, ideaReq)
-		assertEqual(ideaRec.Code, http.StatusOK, t, "Idea should have been fetched")
+		assertEqual(http.StatusOK, ideaRec.Code, t, ideaRec.Body.String())
 
 		ideaResp := []domain.Idea{}
 		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
@@ -550,7 +550,7 @@ func TestCreateIdeas(t *testing.T) {
 
 		artistSongRels := []domain.MusicalArtistsSongs{}
 		db.Where(&domain.MusicalArtistsSongs{MusicalArtistSpotifyID: idea.Songs[0].Artists[0].SpotifyID}).Find(&artistSongRels)
-		assertEqual(1, len(artistSongRels), t)
+		assertEqual(1, len(artistSongRels), t, "Wrong number of artist song m2m relations")
 	})
 
 	t.Cleanup(func() {
@@ -619,6 +619,30 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 		Genres:           []domain.CinematicGenre{{Name: "Drama"}, {Name: "Crime"}},
 	}
 
+	musicalAlbum := domain.MusicalAlbum{
+		SpotifyID:   "1BJtoy1VgHMMvotBwvylJ5",
+		SpotifyUrl:  "https://open.spotify.com/album/1BJtoy1VgHMMvotBwvylJ5",
+		Name:        "Some Random Album",
+		ReleaseDate: "2022-10-28",
+		CoverUrl:    "https://i.scdn.co/image/ab67616d00001e02e65b2a729914445d34777d23",
+	}
+	db.Create(musicalAlbum)
+
+	song := domain.Song{
+		SpotifyID:             "6AhwAWzSlISc5ZvGonkgdF",
+		Name:                  "The Audacity",
+		SpotifyUrl:            "https://open.spotify.com/track/6AhwAWzSlISc5ZvGonkgdN",
+		PreviewUrl:            "https://p.scdn.co/mp3-preview/c47c83a2127cc1bcdd233d5159c730550cfbd0ae?cid=774b29d4f13844c495f206cafdad9c86",
+		MusicalAlbumSpotifyID: "1BJtoy1VgHMMvotBwvylJ5",
+		Artists: []domain.MusicalArtist{
+			{
+				SpotifyID:  "4vGrte8FDu062Ntj0RsPi7",
+				SpotifyUrl: "https://open.spotify.com/artist/4vGrte8FDu062Ntj0RsPiZ",
+				Name:       "Random Band",
+			},
+		},
+	}
+
 	fullIdea := &domain.Idea{
 		UserID:  user.ID,
 		Content: "Content for an idea anchored upon a blog",
@@ -627,6 +651,7 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 		Anchors: []*domain.Idea{emptyIdea},
 		Books:   []domain.Book{book},
 		Movies:  []domain.Movie{movie},
+		Songs:   []domain.Song{song},
 	}
 
 	db.Create(fullIdea)
@@ -674,4 +699,7 @@ func checkIdeaAssociations(t *testing.T, idea *domain.Idea) {
 	assertUnequal(0, len(idea.Movies[0].Genres), t, "Cinematic genres missing")
 	assertUnequal(0, len(idea.Books), t, "Books missing")
 	assertUnequal(0, len(idea.Books[0].Authors), t, "Authors missing")
+	assertUnequal(0, len(idea.Songs), t, "Songs missing")
+	assertUnequal("", idea.Songs[0].MusicalAlbum.SpotifyID, t, "Song album missing")
+	assertUnequal(0, len(idea.Songs[0].Artists), t, "Song artists missing")
 }
