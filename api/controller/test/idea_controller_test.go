@@ -466,7 +466,91 @@ func TestCreateIdeas(t *testing.T) {
 	})
 
 	t.Run("Songs", func(t *testing.T) {
-		t.Skip()
+		ideaReqBody := []byte(`{
+			"content": "Idea with a song",
+			"songs": [
+				{
+					"spotify_id": "6AhwAWzSlISc5ZvGonkgdN",
+					"name": "Playing God",
+					"spotify_url": "https://open.spotify.com/track/6AhwAWzSlISc5ZvGonkgdN",
+					"preview_url": "https://p.scdn.co/mp3-preview/c47c83a2127cc1bcdd233d5159c730550cfbd0ae?cid=774b29d4f13844c495f206cafdad9c86",
+					"album": {
+						"spotify_id": "1BJtoy1VgHMMvotBwvylJ5",
+						"spotify_url": "https://open.spotify.com/album/1BJtoy1VgHMMvotBwvylJ5",
+						"name": "Remember That You Will Die",
+						"release_date": "2022-10-28",
+						"cover_url": "https://i.scdn.co/image/ab67616d00001e02e65b2a729914445d34777d23"
+					},
+					"artists": [{
+						"spotify_id": "4vGrte8FDu062Ntj0RsPiZ",
+						"spotify_url": "https://open.spotify.com/artist/4vGrte8FDu062Ntj0RsPiZ",
+						"name": "Polpyhia"
+					}]
+				}
+			]
+		}`)
+
+		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		ideaReq.Header.Add("Content-Type", "application/json")
+		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		ideaRec := httptest.NewRecorder()
+
+		gin.ServeHTTP(ideaRec, ideaReq)
+		assertEqual(http.StatusCreated, ideaRec.Code, t, "Idea should have been created")
+
+		idea := &domain.Idea{}
+		json.NewDecoder(ideaRec.Body).Decode(idea)
+
+		assertEqual("Playing God", idea.Songs[0].Name, t)
+		assertEqual("1BJtoy1VgHMMvotBwvylJ5", idea.Songs[0].MusicalAlbumSpotifyID, t)
+
+		anotherIdeaReqBody := []byte(`{
+			"content": "Another idea with an existing song",
+			"songs": [
+				{
+					"spotify_id": "6AhwAWzSlISc5ZvGonkgdN",
+					"name": "Playing God",
+					"spotify_url": "https://open.spotify.com/track/6AhwAWzSlISc5ZvGonkgdN",
+					"preview_url": "https://p.scdn.co/mp3-preview/c47c83a2127cc1bcdd233d5159c730550cfbd0ae?cid=774b29d4f13844c495f206cafdad9c86",
+					"album": {
+						"spotify_id": "1BJtoy1VgHMMvotBwvylJ5",
+						"spotify_url": "https://open.spotify.com/album/1BJtoy1VgHMMvotBwvylJ5",
+						"name": "Remember That You Will Die",
+						"release_date": "2022-10-28",
+						"cover_url": "https://i.scdn.co/image/ab67616d00001e02e65b2a729914445d34777d23"
+					},
+					"artists": [{
+						"spotify_id": "4vGrte8FDu062Ntj0RsPiZ",
+						"spotify_url": "https://open.spotify.com/artist/4vGrte8FDu062Ntj0RsPiZ",
+						"name": "Polpyhia"
+					}]
+				}
+			]
+		}`)
+
+		anotherIdeaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(anotherIdeaReqBody))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		anotherIdeaReq.Header.Add("Content-Type", "application/json")
+		anotherIdeaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		anotherIdeaRec := httptest.NewRecorder()
+
+		gin.ServeHTTP(anotherIdeaRec, anotherIdeaReq)
+		assertEqual(http.StatusCreated, anotherIdeaRec.Code, t, "Second idea should have been created")
+
+		ideaSongRels := []domain.IdeasSongs{}
+		db.Where(&domain.IdeasSongs{SongSpotifyID: idea.Songs[0].SpotifyID}).Find(&ideaSongRels)
+		assertEqual(2, len(ideaSongRels), t)
+
+		artistSongRels := []domain.MusicalArtistsSongs{}
+		db.Where(&domain.MusicalArtistsSongs{MusicalArtistSpotifyID: idea.Songs[0].Artists[0].SpotifyID}).Find(&artistSongRels)
+		assertEqual(1, len(artistSongRels), t)
 	})
 
 	t.Cleanup(func() {
@@ -561,7 +645,9 @@ func fetchResourceByUrl[M any](db *gorm.DB, resource *M, url string) *M {
 }
 
 func cleanupDatabase(db *gorm.DB) {
+	db.Exec("delete from musical_artists_songs")
 	db.Exec("delete from anchors_ideas")
+	db.Exec("delete from ideas_songs")
 	db.Exec("delete from ideas_videos")
 	db.Exec("delete from blogs_ideas")
 	db.Exec("delete from books_ideas")
@@ -569,6 +655,9 @@ func cleanupDatabase(db *gorm.DB) {
 	db.Exec("delete from ideas_movies")
 	db.Exec("delete from cinematic_genres_movies")
 	db.Exec("delete from cinematic_genres")
+	db.Exec("delete from musical_artists")
+	db.Exec("delete from songs")
+	db.Exec("delete from musical_albums")
 	db.Exec("delete from movies")
 	db.Exec("delete from authors")
 	db.Exec("delete from books")

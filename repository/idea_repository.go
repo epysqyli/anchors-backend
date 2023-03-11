@@ -157,6 +157,18 @@ func (ir *IdeaRepository) assignResourceFields(idea *domain.Idea) {
 			videoPtr.AssignIdentifier()
 		}
 	}
+
+	for i, song := range idea.Songs {
+		songPtr := &idea.Songs[i]
+
+		album := domain.MusicalAlbum{}
+		ir.database.Where(&domain.MusicalAlbum{SpotifyID: song.Album.SpotifyID}).First(&album)
+		if album.SpotifyID == "" {
+			ir.database.Create(song.Album)
+		}
+
+		songPtr.MusicalAlbumSpotifyID = song.Album.SpotifyID
+	}
 }
 
 // afterCreate DB hook?

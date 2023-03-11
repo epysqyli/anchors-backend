@@ -28,3 +28,13 @@ type MusicalArtist struct {
 	SpotifyUrl string `json:"spotify_url"`
 	Name       string `json:"name"`
 }
+
+type MusicalArtistsSongs struct {
+	SongSpotifyID          string
+	MusicalArtistSpotifyID string
+}
+
+type IdeasSongs struct {
+	SongSpotifyID string
+	IdeaID        uint
+}
