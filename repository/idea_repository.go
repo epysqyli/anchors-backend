@@ -98,6 +98,7 @@ func (ir *IdeaRepository) DeleteByID(c context.Context, id string) error {
 	return tx.Error
 }
 
+// beforeCreate hook?
 func (ir *IdeaRepository) assignExistingIDs(idea *domain.Idea) {
 	for iv, video := range idea.Videos {
 		if video.ID == 0 {
@@ -200,7 +201,7 @@ func (ir *IdeaRepository) assignExistingIDs(idea *domain.Idea) {
 	}
 }
 
-// beforeCreate hook: assign unique identifiers and other computed fields based on the resource
+// beforeCreate hook?
 func (ir *IdeaRepository) assignResourceFields(idea *domain.Idea) {
 	// assign youtube channel as well - might just happen on the frontend
 	for i, video := range idea.Videos {
