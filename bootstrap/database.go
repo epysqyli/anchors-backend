@@ -72,6 +72,7 @@ func NewPostgresDatabase(env *Env) *gorm.DB {
 		migration.MusicalArtists(),
 		migration.Wikis(),
 		migration.Generics(),
+		migration.Articles(),
 	})
 
 	if err = migrations.Migrate(); err != nil {

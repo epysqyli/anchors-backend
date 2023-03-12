@@ -27,7 +27,7 @@ func TestFetchIdeas(t *testing.T) {
 		ideaRec := httptest.NewRecorder()
 
 		gin.ServeHTTP(ideaRec, ideaReq)
-		assertEqual(ideaRec.Code, http.StatusOK, t, "Idea should have been fetched")
+		assertEqual(http.StatusOK, ideaRec.Code, t, "Idea should have been fetched")
 
 		ideasResp := []domain.Idea{}
 		json.NewDecoder(ideaRec.Body).Decode(&ideasResp)
@@ -69,7 +69,7 @@ func TestFetchIdeas(t *testing.T) {
 		ideaRec := httptest.NewRecorder()
 
 		gin.ServeHTTP(ideaRec, ideaReq)
-		assertEqual(ideaRec.Code, http.StatusOK, t, "Idea should have been fetched")
+		assertEqual(http.StatusOK, ideaRec.Code, t, "Idea should have been fetched")
 
 		ideaResp := domain.Idea{}
 		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
@@ -651,6 +651,55 @@ func TestCreateIdeas(t *testing.T) {
 		assertEqual(2, len(genericsIdeasRels), t, "Wrong number of generic idea m2m entries")
 	})
 
+	t.Run("Articles", func(t *testing.T) {
+		ideaReqBody := []byte(`{
+			"content": "Idea with article resource type",
+			"articles": [{"url": "https://whatever-article.com"}]
+		}`)
+
+		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		ideaReq.Header.Add("Content-Type", "application/json")
+		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		ideaRec := httptest.NewRecorder()
+
+		gin.ServeHTTP(ideaRec, ideaReq)
+		assertEqual(http.StatusCreated, ideaRec.Code, t, "First idea should have been created")
+
+		anotherIdeaReqBody := []byte(`{
+			"content": "Another idea with the same article resource type",
+			"articles": [{"url": "https://whatever-article.com"}]
+		}`)
+
+		anotherIdeaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(anotherIdeaReqBody))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		anotherIdeaReq.Header.Add("Content-Type", "application/json")
+		anotherIdeaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		anotherIdeaRec := httptest.NewRecorder()
+
+		gin.ServeHTTP(anotherIdeaRec, anotherIdeaReq)
+		assertEqual(http.StatusCreated, anotherIdeaRec.Code, t, "Second idea should have been created")
+
+		idea := &domain.Idea{}
+		json.NewDecoder(ideaRec.Body).Decode(idea)
+
+		assertEqual("https://whatever-article.com", idea.Articles[0].Url, t, "Wrong article url")
+
+		articles := []domain.Article{}
+		db.Where(&domain.Article{Url: idea.Articles[0].Url}).Find(&articles)
+		assertEqual(1, len(articles), t, "Wrong number of articles created")
+
+		articlesIdeasRels := []domain.ArticlesIdeas{}
+		db.Where(&domain.ArticlesIdeas{ArticleID: idea.Articles[0].ID}).Find(&articlesIdeasRels)
+		assertEqual(2, len(articlesIdeasRels), t, "Wrong number of articles idea m2m entries")
+	})
+
 	t.Cleanup(func() {
 		cleanupDatabase(db)
 		cleanupUser(db, sampleUser().Name)
@@ -742,8 +791,8 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 	}
 
 	wiki := domain.Wiki{Url: "https://en.wikipedia.org/wiki/Bitcoin"}
-
 	generic := domain.Generic{Url: "https://wtfhappenedin1971.com/"}
+	article := domain.Article{Url: "https://www.fool.com/some-article"}
 
 	fullIdea := &domain.Idea{
 		UserID:   user.ID,
@@ -756,6 +805,7 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 		Songs:    []domain.Song{song},
 		Wikis:    []domain.Wiki{wiki},
 		Generics: []domain.Generic{generic},
+		Articles: []domain.Article{article},
 	}
 
 	db.Create(fullIdea)
@@ -776,6 +826,7 @@ func fetchResourceByUrl[M any](db *gorm.DB, resource *M, url string) *M {
 func cleanupDatabase(db *gorm.DB) {
 	db.Exec("delete from musical_artists_songs")
 	db.Exec("delete from generics_ideas")
+	db.Exec("delete from articles_ideas")
 	db.Exec("delete from ideas_wikis")
 	db.Exec("delete from anchors_ideas")
 	db.Exec("delete from ideas_songs")
@@ -788,6 +839,7 @@ func cleanupDatabase(db *gorm.DB) {
 	db.Exec("delete from cinematic_genres")
 	db.Exec("delete from musical_artists")
 	db.Exec("delete from generics")
+	db.Exec("delete from articles")
 	db.Exec("delete from songs")
 	db.Exec("delete from wikis")
 	db.Exec("delete from musical_albums")
@@ -812,4 +864,5 @@ func checkIdeaAssociations(t *testing.T, idea *domain.Idea) {
 	assertUnequal(0, len(idea.Songs[0].Artists), t, "Song artists missing")
 	assertUnequal(0, len(idea.Wikis), t, "Wikis missing")
 	assertUnequal(0, len(idea.Generics), t, "Generics missing")
+	assertUnequal(0, len(idea.Articles), t, "Articles missing")
 }
