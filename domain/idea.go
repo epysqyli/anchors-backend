@@ -9,15 +9,16 @@ import (
 // which associations should be array of pointers?
 type Idea struct {
 	gorm.Model
-	UserID  uint    `json:"user_id"`
-	Content string  `json:"content"`
-	Videos  []Video `gorm:"many2many:ideas_videos;" json:"videos"`
-	Blogs   []Blog  `gorm:"many2many:blogs_ideas;" json:"blogs"`
-	Books   []Book  `gorm:"many2many:books_ideas" json:"books"`
-	Movies  []Movie `gorm:"many2many:ideas_movies" json:"movies"`
-	Songs   []Song  `gorm:"many2many:ideas_songs" json:"songs"`
-	Wikis   []Wiki  `gorm:"many2many:ideas_wikis" json:"wikis"`
-	Anchors []*Idea `gorm:"many2many:anchors_ideas;" json:"anchors"`
+	UserID   uint      `json:"user_id"`
+	Content  string    `json:"content"`
+	Videos   []Video   `gorm:"many2many:ideas_videos;" json:"videos"`
+	Blogs    []Blog    `gorm:"many2many:blogs_ideas;" json:"blogs"`
+	Books    []Book    `gorm:"many2many:books_ideas" json:"books"`
+	Movies   []Movie   `gorm:"many2many:ideas_movies" json:"movies"`
+	Songs    []Song    `gorm:"many2many:ideas_songs" json:"songs"`
+	Wikis    []Wiki    `gorm:"many2many:ideas_wikis" json:"wikis"`
+	Generics []Generic `gorm:"many2many:generics_ideas" json:"generics"`
+	Anchors  []*Idea   `gorm:"many2many:anchors_ideas;" json:"anchors"`
 }
 
 /**
@@ -39,6 +40,7 @@ func (idea Idea) HasNoResources() bool {
 		idea.Movies == nil &&
 		idea.Songs == nil &&
 		idea.Wikis == nil &&
+		idea.Generics == nil &&
 		idea.Anchors == nil {
 		return true
 	}

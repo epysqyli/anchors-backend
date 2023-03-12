@@ -44,6 +44,7 @@ func (ir *IdeaRepository) FetchAll(c context.Context) ([]domain.Idea, error) {
 		Preload("Songs.MusicalAlbum").
 		Preload("Songs.Artists").
 		Preload("Wikis").
+		Preload("Generics").
 		Find(&ideas)
 
 	return ideas, res.Error
@@ -62,6 +63,7 @@ func (ir *IdeaRepository) FetchByUserID(c context.Context, userID string) ([]dom
 		Preload("Songs.MusicalAlbum").
 		Preload("Songs.Artists").
 		Preload("Wikis").
+		Preload("Generics").
 		Find(&ideas, "user_id = ?", userID)
 
 	return ideas, res.Error
@@ -81,6 +83,7 @@ func (ir *IdeaRepository) FetchByID(c context.Context, id string) (domain.Idea, 
 		Preload("Songs.MusicalAlbum").
 		Preload("Songs.Artists").
 		Preload("Wikis").
+		Preload("Generics").
 		First(&idea, id)
 
 	return idea, res.Error
@@ -165,6 +168,18 @@ func (ir *IdeaRepository) assignExistingIDs(idea *domain.Idea) {
 			if w.ID != 0 {
 				wikiPtr := &idea.Wikis[iw]
 				wikiPtr.ID = w.ID
+			}
+		}
+	}
+
+	for ig, generic := range idea.Generics {
+		if generic.ID == 0 {
+			g := domain.Generic{}
+			ir.database.Where(&domain.Generic{Url: generic.Url}).First(&g)
+
+			if g.ID != 0 {
+				genericPtr := &idea.Generics[ig]
+				genericPtr.ID = g.ID
 			}
 		}
 	}
