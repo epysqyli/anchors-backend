@@ -16,6 +16,7 @@ type Idea struct {
 	Books   []Book  `gorm:"many2many:books_ideas" json:"books"`
 	Movies  []Movie `gorm:"many2many:ideas_movies" json:"movies"`
 	Songs   []Song  `gorm:"many2many:ideas_songs" json:"songs"`
+	Wikis   []Wiki  `gorm:"many2many:ideas_wikis" json:"wikis"`
 	Anchors []*Idea `gorm:"many2many:anchors_ideas;" json:"anchors"`
 }
 
@@ -37,6 +38,7 @@ func (idea Idea) HasNoResources() bool {
 		idea.Books == nil &&
 		idea.Movies == nil &&
 		idea.Songs == nil &&
+		idea.Wikis == nil &&
 		idea.Anchors == nil {
 		return true
 	}

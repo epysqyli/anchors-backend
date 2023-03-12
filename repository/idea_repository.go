@@ -153,6 +153,18 @@ func (ir *IdeaRepository) assignExistingIDs(idea *domain.Idea) {
 			}
 		}
 	}
+
+	for iw, wiki := range idea.Wikis {
+		if wiki.ID == 0 {
+			w := domain.Wiki{}
+			ir.database.Where(&domain.Wiki{Url: wiki.Url}).First(&w)
+
+			if w.ID != 0 {
+				wikiPtr := &idea.Wikis[iw]
+				wikiPtr.ID = w.ID
+			}
+		}
+	}
 }
 
 // beforeCreate hook: assign unique identifiers and other computed fields based on the resource

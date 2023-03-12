@@ -553,6 +553,55 @@ func TestCreateIdeas(t *testing.T) {
 		assertEqual(1, len(artistSongRels), t, "Wrong number of artist song m2m relations")
 	})
 
+	t.Run("Wikis", func(t *testing.T) {
+		ideaReqBody := []byte(`{
+			"content": "Idea with wiki",
+			"wikis": [{"url": "https://en.wikipedia.org/wiki/Machine_code"}]
+		}`)
+
+		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		ideaReq.Header.Add("Content-Type", "application/json")
+		ideaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		ideaRec := httptest.NewRecorder()
+
+		gin.ServeHTTP(ideaRec, ideaReq)
+		assertEqual(http.StatusCreated, ideaRec.Code, t, "First idea should have been created")
+
+		anotherIdeaReqBody := []byte(`{
+			"content": "Another idea with the same wiki",
+			"wikis": [{"url": "https://en.wikipedia.org/wiki/Machine_code"}]
+		}`)
+
+		anotherIdeaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(anotherIdeaReqBody))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		anotherIdeaReq.Header.Add("Content-Type", "application/json")
+		anotherIdeaReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", authTokens.AccessToken))
+		anotherIdeaRec := httptest.NewRecorder()
+
+		gin.ServeHTTP(anotherIdeaRec, anotherIdeaReq)
+		assertEqual(http.StatusCreated, anotherIdeaRec.Code, t, "Second idea should have been created")
+
+		idea := &domain.Idea{}
+		json.NewDecoder(ideaRec.Body).Decode(idea)
+
+		assertEqual("https://en.wikipedia.org/wiki/Machine_code", idea.Wikis[0].Url, t, "Wrong wiki url")
+
+		wikis := []domain.Wiki{}
+		db.Find(&wikis)
+		assertEqual(1, len(wikis), t, "Wrong number of wikis created")
+
+		ideaWikiRels := []domain.IdeasWikis{}
+		db.Where(&domain.IdeasWikis{WikiID: idea.Wikis[0].ID}).Find(&ideaWikiRels)
+		assertEqual(2, len(ideaWikiRels), t, "Wrong number of idea wiki m2m entries")
+	})
+
 	t.Cleanup(func() {
 		cleanupDatabase(db)
 		cleanupUser(db, sampleUser().Name)
@@ -671,6 +720,7 @@ func fetchResourceByUrl[M any](db *gorm.DB, resource *M, url string) *M {
 
 func cleanupDatabase(db *gorm.DB) {
 	db.Exec("delete from musical_artists_songs")
+	db.Exec("delete from ideas_wikis")
 	db.Exec("delete from anchors_ideas")
 	db.Exec("delete from ideas_songs")
 	db.Exec("delete from ideas_videos")
@@ -682,6 +732,7 @@ func cleanupDatabase(db *gorm.DB) {
 	db.Exec("delete from cinematic_genres")
 	db.Exec("delete from musical_artists")
 	db.Exec("delete from songs")
+	db.Exec("delete from wikis")
 	db.Exec("delete from musical_albums")
 	db.Exec("delete from movies")
 	db.Exec("delete from authors")
