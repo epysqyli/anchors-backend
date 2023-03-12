@@ -692,6 +692,8 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 		},
 	}
 
+	wiki := domain.Wiki{Url: "https://en.wikipedia.org/wiki/Bitcoin"}
+
 	fullIdea := &domain.Idea{
 		UserID:  user.ID,
 		Content: "Content for an idea anchored upon a blog",
@@ -701,6 +703,7 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 		Books:   []domain.Book{book},
 		Movies:  []domain.Movie{movie},
 		Songs:   []domain.Song{song},
+		Wikis:   []domain.Wiki{wiki},
 	}
 
 	db.Create(fullIdea)
@@ -753,4 +756,5 @@ func checkIdeaAssociations(t *testing.T, idea *domain.Idea) {
 	assertUnequal(0, len(idea.Songs), t, "Songs missing")
 	assertUnequal("", idea.Songs[0].MusicalAlbum.SpotifyID, t, "Song album missing")
 	assertUnequal(0, len(idea.Songs[0].Artists), t, "Song artists missing")
+	assertUnequal(0, len(idea.Wikis), t, "Wikis missing")
 }
