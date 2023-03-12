@@ -594,7 +594,7 @@ func TestCreateIdeas(t *testing.T) {
 		assertEqual("https://en.wikipedia.org/wiki/Machine_code", idea.Wikis[0].Url, t, "Wrong wiki url")
 
 		wikis := []domain.Wiki{}
-		db.Find(&wikis)
+		db.Where(&domain.Wiki{Url: idea.Wikis[0].Url}).Find(&wikis)
 		assertEqual(1, len(wikis), t, "Wrong number of wikis created")
 
 		ideaWikiRels := []domain.IdeasWikis{}
@@ -604,7 +604,7 @@ func TestCreateIdeas(t *testing.T) {
 
 	t.Run("Generics", func(t *testing.T) {
 		ideaReqBody := []byte(`{
-			"content": "Idea with wiki",
+			"content": "Idea with generic resource type",
 			"generics": [{"url": "https://www.maxcountryman.com/articles/a-framework-for-prioritizing-tech-debt"}]
 		}`)
 
@@ -621,7 +621,7 @@ func TestCreateIdeas(t *testing.T) {
 		assertEqual(http.StatusCreated, ideaRec.Code, t, "First idea should have been created")
 
 		anotherIdeaReqBody := []byte(`{
-			"content": "Another idea with the same wiki",
+			"content": "Another idea with the same generic resource type",
 			"generics": [{"url": "https://www.maxcountryman.com/articles/a-framework-for-prioritizing-tech-debt"}]
 		}`)
 
@@ -640,10 +640,10 @@ func TestCreateIdeas(t *testing.T) {
 		idea := &domain.Idea{}
 		json.NewDecoder(ideaRec.Body).Decode(idea)
 
-		assertEqual("https://www.maxcountryman.com/articles/a-framework-for-prioritizing-tech-debt", idea.Generics[0].Url, t, "Wrong wiki url")
+		assertEqual("https://www.maxcountryman.com/articles/a-framework-for-prioritizing-tech-debt", idea.Generics[0].Url, t, "Wrong generic url")
 
 		generics := []domain.Generic{}
-		db.Find(&generics)
+		db.Where(&domain.Generic{Url: idea.Generics[0].Url}).Find(&generics)
 		assertEqual(1, len(generics), t, "Wrong number of generics created")
 
 		genericsIdeasRels := []domain.GenericsIdeas{}
