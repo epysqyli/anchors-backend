@@ -58,7 +58,7 @@ func TestFetchIdeas(t *testing.T) {
 		checkIdeaAssociations(t, &ideaResp[1])
 	})
 
-	t.Run("ID", func(t *testing.T) {
+	t.Run("IdeaID", func(t *testing.T) {
 		endpoint := fmt.Sprintf("/v1/ideas/%d", ideas[1].ID)
 		ideaReq, err := http.NewRequest(http.MethodGet, endpoint, bytes.NewReader([]byte{}))
 		if err != nil {
@@ -76,6 +76,24 @@ func TestFetchIdeas(t *testing.T) {
 		assertEqual(ideas[1].Content, ideaResp.Content, t, "Unexpected content")
 
 		checkIdeaAssociations(t, &ideaResp)
+	})
+
+	t.Run("ByVideoID", func(t *testing.T) {
+		endpoint := fmt.Sprintf("/v1/ideas/by_anchor/%s/%d", "videos", ideas[1].Videos[0].ID)
+		ideaReq, err := http.NewRequest(http.MethodGet, endpoint, bytes.NewReader([]byte{}))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		ideaReq.Header.Add("Content-Type", "application/json")
+		ideaRec := httptest.NewRecorder()
+
+		gin.ServeHTTP(ideaRec, ideaReq)
+		assertEqual(http.StatusOK, ideaRec.Code, t, "Idea should have been fetched")
+
+		ideaResp := []domain.Idea{}
+		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
+		assertEqual(2, len(ideaResp), t, "Wrong number of ideas fetched")
 	})
 
 	t.Cleanup(func() {
@@ -259,8 +277,8 @@ func TestCreateIdeas(t *testing.T) {
 
 	t.Run("AnchorIdeas", func(t *testing.T) {
 		ideas := seedIdeas(db, user)
-		req := `{"content": "New idea with two anchor ideas", "anchors": [{"id": %d}, {"id": %d}]}`
-		ideaReqBody := []byte(fmt.Sprintf(req, ideas[0].ID, ideas[1].ID))
+		req := `{"content": "New idea with two anchor ideas", "anchors": [{"id": %d}, {"id": %d}, {"id": %d}]}`
+		ideaReqBody := []byte(fmt.Sprintf(req, ideas[0].ID, ideas[1].ID, ideas[2].ID))
 
 		ideaReq, err := http.NewRequest(http.MethodPost, "/v1/ideas", bytes.NewReader(ideaReqBody))
 		if err != nil {
@@ -773,6 +791,7 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 		ReleaseDate: "2022-10-28",
 		CoverUrl:    "https://i.scdn.co/image/ab67616d00001e02e65b2a729914445d34777d23",
 	}
+
 	db.Create(musicalAlbum)
 
 	song := domain.Song{
@@ -793,12 +812,15 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 	wiki := domain.Wiki{Url: "https://en.wikipedia.org/wiki/Bitcoin"}
 	generic := domain.Generic{Url: "https://wtfhappenedin1971.com/"}
 	article := domain.Article{Url: "https://www.fool.com/some-article"}
+	video := domain.Video{Url: "https://some-youtube-video.com", YoutubeChannel: "cool-channel"}
+
+	db.Create(&video)
 
 	fullIdea := &domain.Idea{
 		UserID:   user.ID,
 		Content:  "Content for an idea anchored upon a blog",
 		Blogs:    []domain.Blog{{Url: "https://some-blog.com", Category: "science"}},
-		Videos:   []domain.Video{{Url: "https://some-youtube-video.com", YoutubeChannel: "cool-channel"}},
+		Videos:   []domain.Video{video},
 		Anchors:  []*domain.Idea{emptyIdea},
 		Books:    []domain.Book{book},
 		Movies:   []domain.Movie{movie},
@@ -810,7 +832,15 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 
 	db.Create(fullIdea)
 
-	return []domain.Idea{*emptyIdea, *fullIdea}
+	anotherIdea := &domain.Idea{
+		UserID:  user.ID,
+		Content: "Another idea anchored upon an existing video",
+		Videos:  []domain.Video{video},
+	}
+
+	db.Create(anotherIdea)
+
+	return []domain.Idea{*emptyIdea, *fullIdea, *anotherIdea}
 }
 
 func fetchResources[M any](db *gorm.DB, resources []M) []M {

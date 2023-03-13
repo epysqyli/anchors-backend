@@ -10,6 +10,7 @@ type Song struct {
 	Artists               []MusicalArtist `json:"artists" gorm:"many2many:musical_artists_songs"`
 	MusicalAlbum          MusicalAlbum    `json:"album"`
 	MusicalAlbumSpotifyID string
+	Ideas                 []Idea `gorm:"many2many:ideas_songs"`
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
 }

@@ -25,6 +25,19 @@ func (ic *IdeaController) FetchIdeaByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, idea)
 }
 
+func (ic *IdeaController) FetchIdeaByResourceID(ctx *gin.Context) {
+	resType := ctx.Param("resource_type")
+	resID := ctx.Param("resource_id")
+	ideas, err := ic.IdeaRepository.FetchByResourceID(ctx, resType, resID)
+
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, domain.ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, ideas)
+}
+
 func (ic *IdeaController) FetchIdeasByUserID(ctx *gin.Context) {
 	userID := ctx.Param("user_id")
 	ideas, err := ic.IdeaRepository.FetchByUserID(ctx, userID)

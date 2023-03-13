@@ -53,7 +53,7 @@ func (ir *IdeaRepository) FetchAll(c context.Context) ([]domain.Idea, error) {
 
 func (ir *IdeaRepository) FetchByUserID(c context.Context, userID string) ([]domain.Idea, error) {
 	var ideas []domain.Idea
-	res := ir.database.Model(&domain.Idea{}).
+	res := ir.database.
 		Preload("Blogs").
 		Preload("Videos").
 		Preload("Anchors").
@@ -90,6 +90,51 @@ func (ir *IdeaRepository) FetchByID(c context.Context, id string) (domain.Idea, 
 		First(&idea, id)
 
 	return idea, res.Error
+}
+
+func (ir *IdeaRepository) FetchByResourceID(c context.Context, resType string, resID string) ([]domain.Idea, error) {
+	var ideas []domain.Idea
+
+	switch resType {
+	case "blogs":
+		blog := domain.Blog{}
+		ir.database.Preload("Ideas").First(&blog, resID)
+		ideas = blog.Ideas
+	case "videos":
+		video := domain.Video{}
+		ir.database.Preload("Ideas").First(&video, resID)
+		ideas = video.Ideas
+	case "books":
+		book := domain.Book{}
+		ir.database.Preload("Ideas").First(&book, resID)
+		ideas = book.Ideas
+	case "movies":
+		movie := domain.Movie{}
+		ir.database.Preload("Ideas").First(&movie, resID)
+		ideas = movie.Ideas
+	case "songs":
+		song := domain.Song{}
+		ir.database.Preload("Ideas").First(&song, resID)
+		ideas = song.Ideas
+	case "wikis":
+		wiki := domain.Wiki{}
+		ir.database.Preload("Ideas").First(&wiki, resID)
+		ideas = wiki.Ideas
+	case "generics":
+		generic := domain.Generic{}
+		ir.database.Preload("Ideas").First(&generic, resID)
+		ideas = generic.Ideas
+	case "articles":
+		article := domain.Article{}
+		ir.database.Preload("Ideas").First(&article, resID)
+		ideas = article.Ideas
+		// case "anchors":
+		// 	anchor := domain.Idea{}
+		// 	ir.database.Preload("Anchors").First(&anchor, resID)
+		// 	ideas = anchor.Anchors
+	}
+
+	return ideas, nil
 }
 
 func (ir *IdeaRepository) DeleteByID(c context.Context, id string) error {

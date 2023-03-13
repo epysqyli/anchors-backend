@@ -12,4 +12,5 @@ type Book struct {
 	Language       string   `json:"language" gorm:"size:20"`
 	Authors        []Author `json:"authors" gorm:"many2many:authors_books"` // authors_facet: {author_key, full_name}
 	Chapter        string   `json:"chapter" gorm:"-;size:256"`              // to books_ideas
+	Ideas          []Idea   `gorm:"many2many:books_ideas"`
 }
