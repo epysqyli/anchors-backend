@@ -92,7 +92,7 @@ func (ir *IdeaRepository) FetchByID(c context.Context, id string) (domain.Idea, 
 	return idea, res.Error
 }
 
-func (ir *IdeaRepository) FetchByResourceID(c context.Context, resType string, resID string) ([]domain.Idea, error) {
+func (ir *IdeaRepository) FetchByResourceID(c context.Context, resType string, resID string) []domain.Idea {
 	var ideas []domain.Idea
 
 	switch resType {
@@ -128,13 +128,13 @@ func (ir *IdeaRepository) FetchByResourceID(c context.Context, resType string, r
 		article := domain.Article{}
 		ir.database.Preload("Ideas").First(&article, resID)
 		ideas = article.Ideas
-		// case "anchors":
-		// 	anchor := domain.Idea{}
-		// 	ir.database.Preload("Anchors").First(&anchor, resID)
-		// 	ideas = anchor.Anchors
+	case "anchors":
+		anchor := domain.Idea{}
+		ir.database.Preload("Anchors").First(&anchor, resID)
+		ideas = anchor.Anchors
 	}
 
-	return ideas, nil
+	return ideas
 }
 
 func (ir *IdeaRepository) DeleteByID(c context.Context, id string) error {

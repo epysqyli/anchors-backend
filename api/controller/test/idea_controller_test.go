@@ -821,7 +821,7 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 		Content:  "Content for an idea anchored upon a blog",
 		Blogs:    []domain.Blog{{Url: "https://some-blog.com", Category: "science"}},
 		Videos:   []domain.Video{video},
-		Anchors:  []*domain.Idea{emptyIdea},
+		Anchors:  []domain.Idea{*emptyIdea},
 		Books:    []domain.Book{book},
 		Movies:   []domain.Movie{movie},
 		Songs:    []domain.Song{song},
