@@ -30,7 +30,6 @@ func (ir *IdeaRepository) Create(c context.Context, idea *domain.Idea) error {
 	return nil
 }
 
-// the main feed: querying and pagination need to be set up
 func (ir *IdeaRepository) FetchAll(c context.Context) ([]domain.Idea, error) {
 	var ideas []domain.Idea
 	res := ir.database.
@@ -71,7 +70,6 @@ func (ir *IdeaRepository) FetchByUserID(c context.Context, userID string) ([]dom
 	return ideas, res.Error
 }
 
-// each 'preload' executes a query, optimize when and if necessary
 func (ir *IdeaRepository) FetchByID(c context.Context, id string) (domain.Idea, error) {
 	var idea domain.Idea
 	res := ir.database.
@@ -248,7 +246,7 @@ func (ir *IdeaRepository) assignExistingIDs(idea *domain.Idea) {
 
 // beforeCreate hook?
 func (ir *IdeaRepository) assignResourceFields(idea *domain.Idea) {
-	// assign youtube channel as well - might just happen on the frontend
+	// assign youtube channel as well coming from the frontend request fields
 	for i, video := range idea.Videos {
 		if video.Identifier == "" {
 			videoPtr := &idea.Videos[i]
