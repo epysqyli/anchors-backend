@@ -96,6 +96,32 @@ func TestFetchIdeas(t *testing.T) {
 		assertEqual(2, len(ideaResp), t, "Wrong number of ideas fetched")
 	})
 
+	t.Run("GraphByIdeaID", func(t *testing.T) {
+		beginningIdea := seedGraphIdeas(db, user)
+		endpoint := fmt.Sprintf("/v1/ideas/graph/%d", beginningIdea.ID)
+		ideaReq, err := http.NewRequest(http.MethodGet, endpoint, bytes.NewReader([]byte{}))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		ideaReq.Header.Add("Content-Type", "application/json")
+		ideaRec := httptest.NewRecorder()
+
+		gin.ServeHTTP(ideaRec, ideaReq)
+		assertEqual(http.StatusOK, ideaRec.Code, t, "Idea should have been fetched")
+
+		ideaResp := domain.Idea{}
+		json.NewDecoder(ideaRec.Body).Decode(&ideaResp)
+
+		assertUnequal(uint(0), ideaResp.ID, t, "Idea should have been fetched")
+		assertUnequal(0, ideaResp.Videos[0].ID, t, "Video from first idea should have been fetched")
+		assertUnequal(0, ideaResp.Blogs[0].ID, t, "Blog from first idea should have been fetched")
+		assertUnequal(0, ideaResp.Anchors[0].ID, t, "Anchor idea from first idea should have been fetched")
+		assertUnequal(0, ideaResp.Anchors[0].Anchors[0].ID, t, "Reference idea from anchor idea should have been fetched")
+		assertUnequal(0, ideaResp.Videos[0].Ideas[0].ID, t, "Idea from video should have been fetched")
+		assertUnequal(0, ideaResp.Blogs[0].Ideas[0].ID, t, "Idea from blog should have been fetched")
+	})
+
 	t.Cleanup(func() {
 		cleanupDatabase(db)
 		cleanupUser(db, user.Name)
@@ -841,6 +867,62 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 	db.Create(anotherIdea)
 
 	return []domain.Idea{*emptyIdea, *fullIdea, *anotherIdea}
+}
+
+func seedGraphIdeas(db *gorm.DB, user domain.User) domain.Idea {
+	video := domain.Video{
+		Url:            "https://whatever-video.com",
+		Identifier:     "8ds12987hd",
+		YoutubeChannel: "Just a random channel",
+	}
+
+	blog := domain.Blog{
+		Url:      "https://whatever-blog.com",
+		Category: "scientific religion",
+	}
+
+	randomIdea := domain.Idea{
+		UserID:  user.ID,
+		Content: "Idea referenced by the anchor idea",
+	}
+
+	db.Create(&video)
+	db.Create(&blog)
+	db.Create(&randomIdea)
+
+	anchorIdea := domain.Idea{
+		UserID:  user.ID,
+		Content: "This is an idea to be used as an anchor",
+		Anchors: []domain.Idea{randomIdea},
+	}
+
+	db.Create(&anchorIdea)
+
+	firstLayerIdea := domain.Idea{
+		UserID:  user.ID,
+		Content: "First layer idea with video and blog",
+		Videos:  []domain.Video{video},
+		Blogs:   []domain.Blog{blog},
+		Anchors: []domain.Idea{anchorIdea},
+	}
+
+	secondLayerIdeaOne := domain.Idea{
+		UserID:  user.ID,
+		Content: "Second layer idea with video",
+		Videos:  []domain.Video{video},
+	}
+
+	secondLayerIdeaTwo := domain.Idea{
+		UserID:  user.ID,
+		Content: "Second layer idea with blog",
+		Blogs:   []domain.Blog{blog},
+	}
+
+	db.Create(&firstLayerIdea)
+	db.Create(&secondLayerIdeaOne)
+	db.Create(&secondLayerIdeaTwo)
+
+	return firstLayerIdea
 }
 
 func fetchResources[M any](db *gorm.DB, resources []M) []M {

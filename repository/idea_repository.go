@@ -90,6 +90,24 @@ func (ir *IdeaRepository) FetchByID(c context.Context, id string) (domain.Idea, 
 	return idea, res.Error
 }
 
+func (ir *IdeaRepository) FetchGraph(c context.Context, ID string) (domain.Idea, error) {
+	var idea domain.Idea
+
+	res := ir.database.
+		Preload("Blogs.Ideas").
+		Preload("Videos.Ideas").
+		Preload("Anchors.Anchors").
+		Preload("Books.Authors").
+		Preload("Movies.Ideas").
+		Preload("Songs.Ideas").
+		Preload("Wikis.Ideas").
+		Preload("Generics.Ideas").
+		Preload("Articles.Ideas").
+		First(&idea, ID)
+
+	return idea, res.Error
+}
+
 func (ir *IdeaRepository) FetchByResourceID(c context.Context, resType string, resID string) []domain.Idea {
 	var ideas []domain.Idea
 

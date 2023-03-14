@@ -18,7 +18,7 @@ type Idea struct {
 	Wikis    []Wiki    `gorm:"many2many:ideas_wikis" json:"wikis"`
 	Generics []Generic `gorm:"many2many:generics_ideas" json:"generics"`
 	Articles []Article `gorm:"many2many:articles_ideas" json:"articles"`
-	Anchors  []Idea    `gorm:"many2many:anchors_ideas;" json:"anchors"` // array of pointers?
+	Anchors  []Idea    `gorm:"many2many:anchors_ideas;" json:"anchors"`
 }
 
 /**
@@ -29,6 +29,7 @@ type IdeaRepository interface {
 	Create(c context.Context, idea *Idea) error
 	FetchByUserID(c context.Context, userID string) ([]Idea, error)
 	FetchByID(c context.Context, id string) (Idea, error)
+	FetchGraph(c context.Context, ID string) (Idea, error)
 	FetchByResourceID(c context.Context, resType string, resID string) []Idea
 	FetchAll(c context.Context) ([]Idea, error)
 	DeleteByID(c context.Context, id string) error
