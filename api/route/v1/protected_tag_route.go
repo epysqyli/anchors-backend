@@ -13,4 +13,5 @@ func NewProtectedTagRouter(db *gorm.DB, group *gin.RouterGroup) {
 	}
 
 	group.POST("/tags", tc.CreateTag)
+	group.DELETE("/tags/:id", tc.DeleteByID)
 }

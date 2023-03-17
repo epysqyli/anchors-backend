@@ -13,4 +13,6 @@ func NewPublicTagRouter(db *gorm.DB, group *gin.RouterGroup) {
 	}
 
 	group.GET("/tags", tc.FetchAllTags)
+	group.GET("/tags/:id", tc.FetchByID)
+	group.GET("/tags/:name", tc.FetchByName)
 }
