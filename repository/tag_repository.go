@@ -15,13 +15,13 @@ func NewTagRepository(db *gorm.DB) domain.TagRepository {
 	}
 }
 
-func (tr *TagRepository) Create(tag *domain.Tag) (domain.Tag, error) {
+func (tr *TagRepository) Create(tag *domain.Tag) error {
 	res := tr.database.Create(tag)
 	if res.Error != nil {
-		return *tag, res.Error
+		return res.Error
 	}
 
-	return *tag, nil
+	return nil
 }
 
 func (tr *TagRepository) FetchAll() []domain.Tag {

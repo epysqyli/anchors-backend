@@ -16,3 +16,15 @@ func (tc *TagsController) FetchAllTags(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, tags)
 }
+
+func (tc *TagsController) CreateTag(ctx *gin.Context) {
+	tag := domain.Tag{}
+	ctx.ShouldBind(&tag)
+
+	err := tc.TagRepository.Create(&tag)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, domain.ErrorResponse{Message: "Could not create tag"})
+	}
+
+	ctx.JSON(http.StatusCreated, tag)
+}

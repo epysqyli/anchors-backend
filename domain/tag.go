@@ -6,7 +6,7 @@ type Tag struct {
 }
 
 type TagRepository interface {
-	Create(tag *Tag) (Tag, error)
+	Create(tag *Tag) error
 	FetchAll() []Tag
 	FetchById(ID string) Tag
 	FetchByName(name string) Tag
