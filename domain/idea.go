@@ -18,7 +18,8 @@ type Idea struct {
 	Wikis    []Wiki    `gorm:"many2many:ideas_wikis" json:"wikis"`
 	Generics []Generic `gorm:"many2many:generics_ideas" json:"generics"`
 	Articles []Article `gorm:"many2many:articles_ideas" json:"articles"`
-	Anchors  []Idea    `gorm:"many2many:anchors_ideas;" json:"anchors"`
+	Anchors  []Idea    `gorm:"many2many:anchors_ideas" json:"anchors"`
+	Tags     []Tag     `gorm:"many2many:ideas_tags" json:"tags"`
 }
 
 type IdeaRepository interface {
