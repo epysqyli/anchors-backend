@@ -21,10 +21,6 @@ type Idea struct {
 	Anchors  []Idea    `gorm:"many2many:anchors_ideas;" json:"anchors"`
 }
 
-/**
- * add optional arg: withAssociations?
- * are there gonna be cases where we want only to fetch the bare idea model?
- */
 type IdeaRepository interface {
 	Create(c context.Context, idea *Idea) error
 	FetchByUserID(c context.Context, userID string) ([]Idea, error)
