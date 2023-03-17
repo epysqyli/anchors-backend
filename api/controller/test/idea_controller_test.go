@@ -937,6 +937,7 @@ func fetchResourceByUrl[M any](db *gorm.DB, resource *M, url string) *M {
 
 func cleanupDatabase(db *gorm.DB) {
 	db.Exec("delete from musical_artists_songs")
+	db.Exec("delete from ideas_tags")
 	db.Exec("delete from generics_ideas")
 	db.Exec("delete from articles_ideas")
 	db.Exec("delete from ideas_wikis")
@@ -950,6 +951,7 @@ func cleanupDatabase(db *gorm.DB) {
 	db.Exec("delete from cinematic_genres_movies")
 	db.Exec("delete from cinematic_genres")
 	db.Exec("delete from musical_artists")
+	db.Exec("delete from tags")
 	db.Exec("delete from generics")
 	db.Exec("delete from articles")
 	db.Exec("delete from songs")
