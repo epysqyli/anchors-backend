@@ -13,6 +13,7 @@ func Setup(env *bootstrap.Env, psqlDB *gorm.DB, routerV1 *gin.RouterGroup) {
 	NewLoginRouter(env, psqlDB, publicRouterV1)
 	NewRefreshTokenRouter(env, psqlDB, publicRouterV1)
 	NewPublicIdeaRouter(psqlDB, publicRouterV1)
+	NewPublicTagRouter(psqlDB, publicRouterV1)
 
 	protectedRouterV1 := routerV1.Group("")
 	protectedRouterV1.Use(middleware.JwtAuthMiddleware(env.AccessTokenSecret))
