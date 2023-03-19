@@ -16,7 +16,7 @@ func TestFetchIdeas(t *testing.T) {
 	gin, db := setup()
 	cleanupDatabase(db)
 	_, user := signup(gin, db, sampleUser())
-	ideas, tag := seedIdeas(db, user)
+	ideas, tags := seedIdeas(db, user)
 
 	t.Run("All", func(t *testing.T) {
 		ideaReq, err := http.NewRequest(http.MethodGet, "/v1/ideas", bytes.NewReader([]byte{}))
@@ -124,7 +124,7 @@ func TestFetchIdeas(t *testing.T) {
 	})
 
 	t.Run("SingleTag", func(t *testing.T) {
-		reqQuery := fmt.Sprintf("/v1/ideas/tags?id=%d", tag.ID)
+		reqQuery := fmt.Sprintf("/v1/ideas/tags?id=%d", tags[0].ID)
 		req, err := http.NewRequest(http.MethodGet, reqQuery, bytes.NewReader([]byte{}))
 		if err != nil {
 			t.Fatalf("could not create request: %v\n", err)
@@ -146,7 +146,23 @@ func TestFetchIdeas(t *testing.T) {
 
 	t.Run("AndTags", func(t *testing.T) {
 		// only ideas that share all tags should be fetched
-		t.Skip()
+		reqQuery := fmt.Sprintf("/v1/ideas/tags?and=%d-%d", tags[0].ID, tags[1].ID)
+		req, err := http.NewRequest(http.MethodGet, reqQuery, bytes.NewReader([]byte{}))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		req.Header.Add("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+
+		gin.ServeHTTP(rec, req)
+		assertEqual(http.StatusOK, rec.Code, t, "Ideas should have been fetched")
+
+		resp := domain.Tag{}
+		json.NewDecoder(rec.Body).Decode(&resp)
+		assertEqual(1, len(resp.Ideas), t, "Wrong number of ideas fetched with AND condition")
+
+		// checkIdeaAssociations(t, &resp.Ideas[0])
 	})
 
 	t.Run("OrTags", func(t *testing.T) {
@@ -819,7 +835,7 @@ func TestDeleteIdea(t *testing.T) {
 	})
 }
 
-func seedIdeas(db *gorm.DB, user domain.User) ([]domain.Idea, domain.Tag) {
+func seedIdeas(db *gorm.DB, user domain.User) ([]domain.Idea, []domain.Tag) {
 	emptyIdea := &domain.Idea{
 		UserID:  user.ID,
 		Content: "Some content that is suitable to a sample idea",
@@ -882,11 +898,11 @@ func seedIdeas(db *gorm.DB, user domain.User) ([]domain.Idea, domain.Tag) {
 
 	db.Create(&video)
 
-	tag := domain.Tag{
-		Name: "cool-stuff",
-	}
-
+	tag := domain.Tag{Name: "cool-stuff"}
 	db.Create(&tag)
+
+	anotherTag := domain.Tag{Name: "even-cooler"}
+	db.Create(&anotherTag)
 
 	fullIdea := &domain.Idea{
 		UserID:   user.ID,
@@ -909,12 +925,12 @@ func seedIdeas(db *gorm.DB, user domain.User) ([]domain.Idea, domain.Tag) {
 		UserID:  user.ID,
 		Content: "Another idea anchored upon an existing video",
 		Videos:  []domain.Video{video},
-		Tags:    []domain.Tag{tag},
+		Tags:    []domain.Tag{tag, anotherTag},
 	}
 
 	db.Create(anotherIdea)
 
-	return []domain.Idea{*emptyIdea, *fullIdea, *anotherIdea}, tag
+	return []domain.Idea{*emptyIdea, *fullIdea, *anotherIdea}, []domain.Tag{tag, anotherTag}
 }
 
 func seedGraphIdeas(db *gorm.DB, user domain.User) domain.Idea {

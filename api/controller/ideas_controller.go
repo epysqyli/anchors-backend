@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -65,10 +66,10 @@ func (ic *IdeaController) FetchIdeasByUserID(ctx *gin.Context) {
  * to build the TagIdeasRequest struct used in the repo
  */
 func (ic *IdeaController) FetchByTags(ctx *gin.Context) {
-	id, _ := strconv.ParseInt(ctx.Query("id"), 0, 32)
-	tagIdeasReq := domain.TagIdeasRequest{ID: uint(id)}
+	tagQuery := domain.NewTagQuery(ctx)
+	log.Default().Printf("%+v", tagQuery)
 
-	tag, err := ic.IdeaRepository.FetchByTags(tagIdeasReq)
+	tag, err := ic.IdeaRepository.FetchByTags(tagQuery)
 
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, domain.ErrorResponse{Message: err.Error()})

@@ -90,8 +90,7 @@ func (ir *IdeaRepository) FetchByID(c context.Context, id string) (domain.Idea, 
 	return idea, res.Error
 }
 
-// fetch based on tag request -> add logic for AND OR NOT
-func (ir *IdeaRepository) FetchByTags(tagReq domain.TagIdeasRequest) (domain.Tag, error) {
+func (ir *IdeaRepository) FetchByTags(tagReq domain.TagQuery) (domain.Tag, error) {
 	tag := domain.Tag{}
 
 	ir.database.
