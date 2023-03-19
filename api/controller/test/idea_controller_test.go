@@ -136,16 +136,15 @@ func TestFetchIdeas(t *testing.T) {
 		gin.ServeHTTP(rec, req)
 		assertEqual(http.StatusOK, rec.Code, t, "Idea should have been fetched")
 
-		resp := domain.Tag{}
+		resp := []domain.Idea{}
 		json.NewDecoder(rec.Body).Decode(&resp)
-		assertEqual(resp.Ideas[0].ID, ideas[1].ID, t, "The correct idea was not fetched by tag")
-		assertEqual(2, len(resp.Ideas), t, "Wrong number of ideas fetched")
+		assertEqual(resp[0].ID, ideas[1].ID, t, "The correct idea was not fetched by tag")
+		assertEqual(2, len(resp), t, "Wrong number of ideas fetched")
 
-		checkIdeaAssociations(t, &resp.Ideas[0])
+		checkIdeaAssociations(t, &resp[0])
 	})
 
 	t.Run("AndTags", func(t *testing.T) {
-		// only ideas that share all tags should be fetched
 		reqQuery := fmt.Sprintf("/v1/ideas/tags?and=%d-%d", tags[0].ID, tags[1].ID)
 		req, err := http.NewRequest(http.MethodGet, reqQuery, bytes.NewReader([]byte{}))
 		if err != nil {
@@ -158,16 +157,27 @@ func TestFetchIdeas(t *testing.T) {
 		gin.ServeHTTP(rec, req)
 		assertEqual(http.StatusOK, rec.Code, t, "Ideas should have been fetched")
 
-		resp := domain.Tag{}
+		resp := []domain.Idea{}
 		json.NewDecoder(rec.Body).Decode(&resp)
-		assertEqual(1, len(resp.Ideas), t, "Wrong number of ideas fetched with AND condition")
-
-		// checkIdeaAssociations(t, &resp.Ideas[0])
+		assertEqual(1, len(resp), t, "Wrong number of ideas fetched with AND tag condition")
 	})
 
 	t.Run("OrTags", func(t *testing.T) {
-		// all ideas with at least one of the tags should be fetched
-		t.Skip()
+		reqQuery := fmt.Sprintf("/v1/ideas/tags?or=%d-%d", tags[0].ID, tags[1].ID)
+		req, err := http.NewRequest(http.MethodGet, reqQuery, bytes.NewReader([]byte{}))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		req.Header.Add("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+
+		gin.ServeHTTP(rec, req)
+		assertEqual(http.StatusOK, rec.Code, t, "Ideas should have been fetched")
+
+		resp := []domain.Idea{}
+		json.NewDecoder(rec.Body).Decode(&resp)
+		assertEqual(2, len(resp), t, "Wrong number of ideas fetched with OR tag condition")
 	})
 
 	t.Run("NotTags", func(t *testing.T) {

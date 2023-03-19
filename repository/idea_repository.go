@@ -90,26 +90,90 @@ func (ir *IdeaRepository) FetchByID(c context.Context, id string) (domain.Idea, 
 	return idea, res.Error
 }
 
-func (ir *IdeaRepository) FetchByTags(tagReq domain.TagQuery) (domain.Tag, error) {
-	tag := domain.Tag{}
+func (ir *IdeaRepository) FetchByTags(tagReq domain.TagQuery) ([]domain.Idea, error) {
+	rels := []domain.IdeasTags{}
+	ideasIDs := make([]uint, 0)
+
+	if tagReq.ID != 0 {
+		ir.database.Where(&domain.IdeasTags{TagID: tagReq.ID}).Find(&rels)
+
+		for _, rel := range rels {
+			if len(ideasIDs) > 0 {
+				dup := false
+
+				for _, ideaID := range ideasIDs {
+					if rel.IdeaID == ideaID {
+						dup = true
+						break
+					}
+				}
+
+				if dup == false {
+					ideasIDs = append(ideasIDs, rel.IdeaID)
+				}
+			} else {
+				ideasIDs = append(ideasIDs, rel.IdeaID)
+			}
+		}
+	} else if len(tagReq.And) != 0 {
+		ir.database.Where("tag_id IN ?", tagReq.And).Find(&rels)
+		threshold := len(tagReq.And)
+
+		for _, rel := range rels {
+			count := 0
+			for i := 0; i < len(rels); i++ {
+				if rel.IdeaID == rels[i].IdeaID {
+					count++
+				}
+			}
+
+			if count == threshold {
+				ideasIDs = append(ideasIDs, rel.IdeaID)
+			}
+		}
+	} else if len(tagReq.Or) != 0 {
+		ir.database.Where("tag_id IN ?", tagReq.Or).Find(&rels)
+		ideasIDs = make([]uint, 0)
+
+		for _, rel := range rels {
+			if len(ideasIDs) > 0 {
+				dup := false
+
+				for _, ideaID := range ideasIDs {
+					if rel.IdeaID == ideaID {
+						dup = true
+						break
+					}
+				}
+
+				if dup == false {
+					ideasIDs = append(ideasIDs, rel.IdeaID)
+				}
+			} else {
+				ideasIDs = append(ideasIDs, rel.IdeaID)
+			}
+		}
+	}
+
+	ideas := []domain.Idea{}
 
 	ir.database.
-		Preload("Ideas.Blogs").
-		Preload("Ideas.Videos").
-		Preload("Ideas.Anchors").
-		Preload("Ideas.Books").
-		Preload("Ideas.Books.Authors").
-		Preload("Ideas.Movies").
-		Preload("Ideas.Movies.Genres").
-		Preload("Ideas.Songs").
-		Preload("Ideas.Songs.MusicalAlbum").
-		Preload("Ideas.Songs.Artists").
-		Preload("Ideas.Wikis").
-		Preload("Ideas.Generics").
-		Preload("Ideas.Articles").
-		First(&tag, tagReq.ID)
+		Preload("Blogs").
+		Preload("Videos").
+		Preload("Anchors").
+		Preload("Books").
+		Preload("Books.Authors").
+		Preload("Movies").
+		Preload("Movies.Genres").
+		Preload("Songs").
+		Preload("Songs.MusicalAlbum").
+		Preload("Songs.Artists").
+		Preload("Wikis").
+		Preload("Generics").
+		Preload("Articles").
+		Where(ideasIDs).Find(&ideas)
 
-	return tag, nil
+	return ideas, nil
 }
 
 func (ir *IdeaRepository) FetchGraph(c context.Context, ID string) (domain.Idea, error) {

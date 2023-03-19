@@ -2,7 +2,6 @@ package controller
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -59,15 +58,8 @@ func (ic *IdeaController) FetchIdeasByUserID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, ideas)
 }
 
-/**
- * tag ids are passed as hyphen delimited strings
- * /v1/ideas/tags?and=1-2-3-4-5
- * these are captured and processed accordingly in order
- * to build the TagIdeasRequest struct used in the repo
- */
 func (ic *IdeaController) FetchByTags(ctx *gin.Context) {
 	tagQuery := domain.NewTagQuery(ctx)
-	log.Default().Printf("%+v", tagQuery)
 
 	tag, err := ic.IdeaRepository.FetchByTags(tagQuery)
 
