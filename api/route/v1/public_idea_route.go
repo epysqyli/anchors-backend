@@ -17,4 +17,5 @@ func NewPublicIdeaRouter(psqlDB *gorm.DB, group *gin.RouterGroup) {
 	group.GET("/users/:user_id/ideas", ic.FetchIdeasByUserID)
 	group.GET("/ideas/graph/:id", ic.FetchGraphByIdeaID)
 	group.GET("/ideas/by_anchor/:resource_type/:resource_id", ic.FetchIdeaByResourceID)
+	group.GET("/ideas/tags", ic.FetchByTags)
 }

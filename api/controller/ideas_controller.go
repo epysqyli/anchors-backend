@@ -58,6 +58,21 @@ func (ic *IdeaController) FetchIdeasByUserID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, ideas)
 }
 
+func (ic *IdeaController) FetchByTags(ctx *gin.Context) {
+	// build complete tagIdeasReq for AND OR NOT
+	id, _ := strconv.ParseInt(ctx.Query("id"), 0, 32)
+	tagIdeasReq := domain.TagIdeasRequest{ID: uint(id)}
+
+	tag, err := ic.IdeaRepository.FetchByTags(tagIdeasReq)
+
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, domain.ErrorResponse{Message: err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, tag)
+}
+
 func (ic *IdeaController) FetchAllIdeas(ctx *gin.Context) {
 	ideas, err := ic.IdeaRepository.FetchAll(ctx)
 

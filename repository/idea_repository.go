@@ -90,6 +90,29 @@ func (ir *IdeaRepository) FetchByID(c context.Context, id string) (domain.Idea, 
 	return idea, res.Error
 }
 
+// fetch based on tag request -> add logic for AND OR NOT
+func (ir *IdeaRepository) FetchByTags(tagReq domain.TagIdeasRequest) (domain.Tag, error) {
+	tag := domain.Tag{}
+
+	ir.database.
+		Preload("Ideas.Blogs").
+		Preload("Ideas.Videos").
+		Preload("Ideas.Anchors").
+		Preload("Ideas.Books").
+		Preload("Ideas.Books.Authors").
+		Preload("Ideas.Movies").
+		Preload("Ideas.Movies.Genres").
+		Preload("Ideas.Songs").
+		Preload("Ideas.Songs.MusicalAlbum").
+		Preload("Ideas.Songs.Artists").
+		Preload("Ideas.Wikis").
+		Preload("Ideas.Generics").
+		Preload("Ideas.Articles").
+		First(&tag, tagReq.ID)
+
+	return tag, nil
+}
+
 func (ir *IdeaRepository) FetchGraph(c context.Context, ID string) (domain.Idea, error) {
 	var idea domain.Idea
 

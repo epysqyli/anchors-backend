@@ -14,8 +14,9 @@ import (
 
 func TestFetchIdeas(t *testing.T) {
 	gin, db := setup()
+	cleanupDatabase(db)
 	_, user := signup(gin, db, sampleUser())
-	ideas := seedIdeas(db, user)
+	ideas, tag := seedIdeas(db, user)
 
 	t.Run("All", func(t *testing.T) {
 		ideaReq, err := http.NewRequest(http.MethodGet, "/v1/ideas", bytes.NewReader([]byte{}))
@@ -122,6 +123,39 @@ func TestFetchIdeas(t *testing.T) {
 		assertUnequal(0, ideaResp.Blogs[0].Ideas[0].ID, t, "Idea from blog should have been fetched")
 	})
 
+	t.Run("SingleTag", func(t *testing.T) {
+		reqQuery := fmt.Sprintf("/v1/ideas/tags?id=%d", tag.ID)
+		req, err := http.NewRequest(http.MethodGet, reqQuery, bytes.NewReader([]byte{}))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		req.Header.Add("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+
+		gin.ServeHTTP(rec, req)
+		assertEqual(http.StatusOK, rec.Code, t, "Idea should have been fetched")
+
+		resp := domain.Tag{}
+		json.NewDecoder(rec.Body).Decode(&resp)
+		assertEqual(resp.Ideas[0].ID, ideas[1].ID, t, "The correct idea was not fetched by tag")
+		assertEqual(2, len(resp.Ideas), t, "Wrong number of ideas fetched")
+
+		checkIdeaAssociations(t, &resp.Ideas[0])
+	})
+
+	t.Run("AndTags", func(t *testing.T) {
+		t.Skip()
+	})
+
+	t.Run("OrTags", func(t *testing.T) {
+		t.Skip()
+	})
+
+	t.Run("NotTags", func(t *testing.T) {
+		t.Skip()
+	})
+
 	t.Cleanup(func() {
 		cleanupDatabase(db)
 		cleanupUser(db, user.Name)
@@ -130,6 +164,7 @@ func TestFetchIdeas(t *testing.T) {
 
 func TestCreateIdeas(t *testing.T) {
 	gin, db := setup()
+	cleanupDatabase(db)
 	authTokens, user := signup(gin, db, sampleUser())
 
 	t.Run("Empty", func(t *testing.T) {
@@ -302,7 +337,7 @@ func TestCreateIdeas(t *testing.T) {
 	})
 
 	t.Run("AnchorIdeas", func(t *testing.T) {
-		ideas := seedIdeas(db, user)
+		ideas, _ := seedIdeas(db, user)
 		req := `{"content": "New idea with two anchor ideas", "anchors": [{"id": %d}, {"id": %d}, {"id": %d}]}`
 		ideaReqBody := []byte(fmt.Sprintf(req, ideas[0].ID, ideas[1].ID, ideas[2].ID))
 
@@ -752,8 +787,9 @@ func TestCreateIdeas(t *testing.T) {
 
 func TestDeleteIdea(t *testing.T) {
 	gin, db := setup()
+	cleanupDatabase(db)
 	authTokens, user := signup(gin, db, sampleUser())
-	ideas := seedIdeas(db, user)
+	ideas, _ := seedIdeas(db, user)
 
 	endpoint := fmt.Sprintf("/v1/ideas/%d", ideas[1].ID)
 	ideaReq, err := http.NewRequest(http.MethodDelete, endpoint, bytes.NewReader([]byte{}))
@@ -779,7 +815,7 @@ func TestDeleteIdea(t *testing.T) {
 	})
 }
 
-func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
+func seedIdeas(db *gorm.DB, user domain.User) ([]domain.Idea, domain.Tag) {
 	emptyIdea := &domain.Idea{
 		UserID:  user.ID,
 		Content: "Some content that is suitable to a sample idea",
@@ -842,6 +878,12 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 
 	db.Create(&video)
 
+	tag := domain.Tag{
+		Name: "cool-stuff",
+	}
+
+	db.Create(&tag)
+
 	fullIdea := &domain.Idea{
 		UserID:   user.ID,
 		Content:  "Content for an idea anchored upon a blog",
@@ -854,6 +896,7 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 		Wikis:    []domain.Wiki{wiki},
 		Generics: []domain.Generic{generic},
 		Articles: []domain.Article{article},
+		Tags:     []domain.Tag{tag},
 	}
 
 	db.Create(fullIdea)
@@ -862,11 +905,12 @@ func seedIdeas(db *gorm.DB, user domain.User) []domain.Idea {
 		UserID:  user.ID,
 		Content: "Another idea anchored upon an existing video",
 		Videos:  []domain.Video{video},
+		Tags:    []domain.Tag{tag},
 	}
 
 	db.Create(anotherIdea)
 
-	return []domain.Idea{*emptyIdea, *fullIdea, *anotherIdea}
+	return []domain.Idea{*emptyIdea, *fullIdea, *anotherIdea}, tag
 }
 
 func seedGraphIdeas(db *gorm.DB, user domain.User) domain.Idea {
@@ -933,36 +977,6 @@ func fetchResources[M any](db *gorm.DB, resources []M) []M {
 func fetchResourceByUrl[M any](db *gorm.DB, resource *M, url string) *M {
 	db.Model(resource).Where("url = ?", url).First(resource)
 	return resource
-}
-
-func cleanupDatabase(db *gorm.DB) {
-	db.Exec("delete from musical_artists_songs")
-	db.Exec("delete from ideas_tags")
-	db.Exec("delete from generics_ideas")
-	db.Exec("delete from articles_ideas")
-	db.Exec("delete from ideas_wikis")
-	db.Exec("delete from anchors_ideas")
-	db.Exec("delete from ideas_songs")
-	db.Exec("delete from ideas_videos")
-	db.Exec("delete from blogs_ideas")
-	db.Exec("delete from books_ideas")
-	db.Exec("delete from authors_books")
-	db.Exec("delete from ideas_movies")
-	db.Exec("delete from cinematic_genres_movies")
-	db.Exec("delete from cinematic_genres")
-	db.Exec("delete from musical_artists")
-	db.Exec("delete from tags")
-	db.Exec("delete from generics")
-	db.Exec("delete from articles")
-	db.Exec("delete from songs")
-	db.Exec("delete from wikis")
-	db.Exec("delete from musical_albums")
-	db.Exec("delete from movies")
-	db.Exec("delete from authors")
-	db.Exec("delete from books")
-	db.Exec("delete from videos")
-	db.Exec("delete from blogs")
-	db.Exec("delete from ideas")
 }
 
 func checkIdeaAssociations(t *testing.T, idea *domain.Idea) {
