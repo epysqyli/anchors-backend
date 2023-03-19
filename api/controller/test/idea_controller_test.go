@@ -145,14 +145,18 @@ func TestFetchIdeas(t *testing.T) {
 	})
 
 	t.Run("AndTags", func(t *testing.T) {
+		// only ideas that share all tags should be fetched
 		t.Skip()
 	})
 
 	t.Run("OrTags", func(t *testing.T) {
+		// all ideas with at least one of the tags should be fetched
 		t.Skip()
 	})
 
 	t.Run("NotTags", func(t *testing.T) {
+		// to be used only in combination with AND or OR ?
+		// any case where ideas should be fetched only when NOT having a certain tag ?
 		t.Skip()
 	})
 

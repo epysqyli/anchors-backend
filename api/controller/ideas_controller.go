@@ -58,8 +58,13 @@ func (ic *IdeaController) FetchIdeasByUserID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, ideas)
 }
 
+/**
+ * tag ids are passed as hyphen delimited strings
+ * /v1/ideas/tags?and=1-2-3-4-5
+ * these are captured and processed accordingly in order
+ * to build the TagIdeasRequest struct used in the repo
+ */
 func (ic *IdeaController) FetchByTags(ctx *gin.Context) {
-	// build complete tagIdeasReq for AND OR NOT
 	id, _ := strconv.ParseInt(ctx.Query("id"), 0, 32)
 	tagIdeasReq := domain.TagIdeasRequest{ID: uint(id)}
 
