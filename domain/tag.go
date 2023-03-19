@@ -13,6 +13,11 @@ type Tag struct {
 	Ideas []Idea `json:"ideas" gorm:"many2many:ideas_tags"`
 }
 
+type IdeasTags struct {
+	IdeaID uint `gorm:"primaryKey"`
+	TagID  uint `gorm:"primaryKey"`
+}
+
 type TagQuery struct {
 	ID  uint   `json:"id"`
 	And []uint `json:"and"`
