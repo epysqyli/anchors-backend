@@ -181,9 +181,22 @@ func TestFetchIdeas(t *testing.T) {
 	})
 
 	t.Run("NotTags", func(t *testing.T) {
-		// to be used only in combination with AND or OR ?
-		// any case where ideas should be fetched only when NOT having a certain tag ?
-		t.Skip()
+		reqQuery := fmt.Sprintf("/v1/ideas/tags?or=%d-%d&not=%d", tags[0].ID, tags[2].ID, tags[1].ID)
+		req, err := http.NewRequest(http.MethodGet, reqQuery, bytes.NewReader([]byte{}))
+		if err != nil {
+			t.Fatalf("could not create request: %v\n", err)
+		}
+
+		req.Header.Add("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+
+		gin.ServeHTTP(rec, req)
+		assertEqual(http.StatusOK, rec.Code, t, "Ideas should have been fetched")
+
+		resp := []domain.Idea{}
+		json.NewDecoder(rec.Body).Decode(&resp)
+		assertEqual(1, len(resp), t, "Wrong number of ideas fetched with NOT and OR tag conditions")
+		assertEqual(ideas[1].ID, resp[0].ID, t, "Wrong ideas fetched with NOT and OR tag conditions")
 	})
 
 	t.Cleanup(func() {
@@ -940,7 +953,10 @@ func seedIdeas(db *gorm.DB, user domain.User) ([]domain.Idea, []domain.Tag) {
 
 	db.Create(anotherIdea)
 
-	return []domain.Idea{*emptyIdea, *fullIdea, *anotherIdea}, []domain.Tag{tag, anotherTag}
+	randomTag := domain.Tag{Name: "random-tag"}
+	db.Create(&randomTag)
+
+	return []domain.Idea{*emptyIdea, *fullIdea, *anotherIdea}, []domain.Tag{tag, anotherTag, randomTag}
 }
 
 func seedGraphIdeas(db *gorm.DB, user domain.User) domain.Idea {

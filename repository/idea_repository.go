@@ -96,24 +96,8 @@ func (ir *IdeaRepository) FetchByTags(tagReq domain.TagQuery) ([]domain.Idea, er
 
 	if tagReq.ID != 0 {
 		ir.database.Where(&domain.IdeasTags{TagID: tagReq.ID}).Find(&rels)
-
 		for _, rel := range rels {
-			if len(ideasIDs) > 0 {
-				dup := false
-
-				for _, ideaID := range ideasIDs {
-					if rel.IdeaID == ideaID {
-						dup = true
-						break
-					}
-				}
-
-				if dup == false {
-					ideasIDs = append(ideasIDs, rel.IdeaID)
-				}
-			} else {
-				ideasIDs = append(ideasIDs, rel.IdeaID)
-			}
+			ideasIDs = append(ideasIDs, rel.IdeaID)
 		}
 	} else if len(tagReq.And) != 0 {
 		ir.database.Where("tag_id IN ?", tagReq.And).Find(&rels)
@@ -153,6 +137,47 @@ func (ir *IdeaRepository) FetchByTags(tagReq domain.TagQuery) ([]domain.Idea, er
 				ideasIDs = append(ideasIDs, rel.IdeaID)
 			}
 		}
+	}
+
+	if (len(tagReq.And) != 0 || len(tagReq.Or) != 0) && len(tagReq.Not) != 0 {
+		notRels := []domain.IdeasTags{}
+		ir.database.Where("tag_id IN ?", tagReq.Not).Find(&notRels)
+		notIdeasIDs := make([]uint, 0)
+
+		for _, notRel := range notRels {
+			if len(notIdeasIDs) > 0 {
+				dup := false
+
+				for _, ideaID := range notIdeasIDs {
+					if notRel.IdeaID == ideaID {
+						dup = true
+						break
+					}
+				}
+
+				if dup == false {
+					notIdeasIDs = append(notIdeasIDs, notRel.IdeaID)
+				}
+			} else {
+				notIdeasIDs = append(notIdeasIDs, notRel.IdeaID)
+			}
+		}
+
+		IDsToKeep := make([]uint, 0)
+		for _, ideaID := range ideasIDs {
+			keep := true
+			for _, notIdeaID := range notIdeasIDs {
+				if ideaID == notIdeaID {
+					keep = false
+				}
+			}
+
+			if keep {
+				IDsToKeep = append(IDsToKeep, ideaID)
+			}
+		}
+
+		ideasIDs = IDsToKeep
 	}
 
 	ideas := []domain.Idea{}
